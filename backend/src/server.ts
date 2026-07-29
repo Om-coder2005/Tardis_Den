@@ -111,7 +111,7 @@ const getUploadContentType = (filePath: string) => {
   return 'application/octet-stream';
 };
 
-app.get('/uploads/:filename', (req: Request, res: Response, next) => {
+app.get('/uploads/:filename', (req: Request, res: Response, next: express.NextFunction) => {
   try {
     const safeFilename = path.basename(String(req.params.filename));
     const filePath = path.join(uploadsDir, safeFilename);
@@ -133,7 +133,7 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // Serve frontend in production
 if (process.env.NODE_ENV === 'production') {
   app.use(express.static(path.join(__dirname, '../../frontend/dist')));
-  app.get('*', (req, res) => {
+  app.get('*', (req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
   });
 }

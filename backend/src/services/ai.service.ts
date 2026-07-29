@@ -1,5 +1,3 @@
-import { GoogleGenAI } from '@google/genai';
-
 export const AIService = {
   async *streamChat(prompt: string, context: any, history: any[]) {
     if (!process.env.GEMINI_API_KEY) {
@@ -13,6 +11,7 @@ export const AIService = {
       return;
     }
 
+    const { GoogleGenAI } = await import('@google/genai');
     const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
     // Format history for Gemini
