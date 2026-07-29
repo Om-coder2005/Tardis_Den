@@ -24,7 +24,8 @@ export const AuthService = {
       }
     });
 
-    const token = jwt.sign({ sessionId: session.id }, process.env.JWT_SECRET!, { expiresIn: '7d' });
+    const jwtSecret = process.env.JWT_SECRET || 'tardis-den-default-jwt-secret-key';
+    const token = jwt.sign({ sessionId: session.id }, jwtSecret, { expiresIn: '7d' });
     await prisma.session.update({
       where: { id: session.id },
       data: { token }
@@ -35,7 +36,8 @@ export const AuthService = {
 
   async logout(token: string): Promise<void> {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { sessionId: string };
+      const jwtSecret = process.env.JWT_SECRET || 'tardis-den-default-jwt-secret-key';
+      const decoded = jwt.verify(token, jwtSecret) as { sessionId: string };
       await prisma.session.delete({ where: { id: decoded.sessionId } });
     } catch (e) {
       // Ignore invalid tokens during logout

@@ -4,6 +4,16 @@ import { prisma } from '../prisma';
 import { AuthService } from '../services/auth.service';
 
 const COOKIE_NAME = 'tardis_session';
+const jwtSecret = process.env.JWT_SECRET || 'tardis-den-default-jwt-secret-key';
+const isProd = process.env.NODE_ENV === 'production';
+
+const cookieOptions = {
+  httpOnly: true,
+  sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+  secure: isProd,
+  path: '/',
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+};
 
 export const AuthController = {
   async login(req: Request, res: Response) {
@@ -18,12 +28,7 @@ export const AuthController = {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    res.cookie(COOKIE_NAME, token, {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
-    });
+    res.cookie(COOKIE_NAME, token, cookieOptions);
 
     res.json({ success: true });
   },
@@ -34,7 +39,7 @@ export const AuthController = {
       return res.json({ authenticated: false });
     }
     try {
-       const decoded = jwt.verify(token, process.env.JWT_SECRET!) as { sessionId: string };
+       const decoded = jwt.verify(token, jwtSecret) as { sessionId: string };
        const session = await prisma.session.findUnique({ where: { id: decoded.sessionId } });
 
        if (!session || session.expiresAt < new Date()) {
@@ -51,7 +56,11 @@ export const AuthController = {
     const token = req.cookies[COOKIE_NAME];
     if (token) {
       await AuthService.logout(token);
-      res.clearCookie(COOKIE_NAME, { path: '/' });
+      res.clearCookie(COOKIE_NAME, {
+        path: '/',
+        sameSite: (isProd ? 'none' : 'lax') as 'none' | 'lax',
+        secure: isProd
+      });
     }
     res.json({ success: true });
   }
