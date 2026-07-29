@@ -4,14 +4,14 @@ import { useRoomStore } from '../../store';
 import { OBJECT_REGISTRY } from './ObjectRegistry';
 import { InteractiveObject } from './components/InteractiveObject';
 import { InteractionPanel } from './components/InteractionPanel';
-import { BookshelfModule } from '../bookshelf/BookshelfModule';
-import { TelescopeModule } from '../telescope/TelescopeModule';
-import { JournalModule } from '../journal/JournalModule';
-import { CameraModule } from '../camera/CameraModule';
-import { ComputerModule } from '../computer/ComputerModule';
-import { AICompanion } from '../ai/AICompanion';
-import { PinnedNotesLayer } from '../journal/components/PinnedNotesLayer';
-import { RestAreaModule } from '../rest/components/RestAreaModule';
+const BookshelfModule = React.lazy(() => import('../bookshelf/BookshelfModule').then(m => ({ default: m.BookshelfModule })));
+const TelescopeModule = React.lazy(() => import('../telescope/TelescopeModule').then(m => ({ default: m.TelescopeModule })));
+const JournalModule = React.lazy(() => import('../journal/JournalModule').then(m => ({ default: m.JournalModule })));
+const CameraModule = React.lazy(() => import('../camera/CameraModule').then(m => ({ default: m.CameraModule })));
+const ComputerModule = React.lazy(() => import('../computer/ComputerModule').then(m => ({ default: m.ComputerModule })));
+const AICompanion = React.lazy(() => import('../ai/AICompanion').then(m => ({ default: m.AICompanion })));
+const PinnedNotesLayer = React.lazy(() => import('../journal/components/PinnedNotesLayer').then(m => ({ default: m.PinnedNotesLayer })));
+const RestAreaModule = React.lazy(() => import('../rest/components/RestAreaModule').then(m => ({ default: m.RestAreaModule })));
 import { EnvironmentLayer } from './components/EnvironmentLayer';
 import { ParticleSystem } from './components/ParticleSystem';
 // @ts-ignore
@@ -86,15 +86,17 @@ export const RoomScene: React.FC = () => {
       </motion.div>
 
       <InteractionPanel />
-      {/* Interactive Modules */}
-      <BookshelfModule />
-      <TelescopeModule />
-      <JournalModule />
-      <CameraModule />
-      <ComputerModule />
-      <RestAreaModule />
-      <AICompanion />
-      <PinnedNotesLayer />
+      {/* Interactive Modules with Suspense for Lazy Loading */}
+      <React.Suspense fallback={null}>
+        <BookshelfModule />
+        <TelescopeModule />
+        <JournalModule />
+        <CameraModule />
+        <ComputerModule />
+        <RestAreaModule />
+        <AICompanion />
+        <PinnedNotesLayer />
+      </React.Suspense>
     </div>
   );
 };

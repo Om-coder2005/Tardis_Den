@@ -36,8 +36,10 @@ export const ExternalController = {
       }
       
       res.json(data);
-    } catch (error) {
-      console.warn('Error fetching Astros, using fallback data:', error);
+    } catch (error: any) {
+      if (error.name !== 'AbortError') {
+        console.warn('Error fetching Astros, using fallback data:', error);
+      }
       // Fallback data in case the external API is down or times out
       res.json({
         number: 10,

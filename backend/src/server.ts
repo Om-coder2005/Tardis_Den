@@ -12,19 +12,73 @@ import externalRoutes from './routes/external.routes';
 import journalRoutes from './routes/journal.routes';
 import photoRoutes from './routes/photo.routes';
 import aiRoutes from './routes/ai.routes';
+import rateLimit from 'express-rate-limit';
+import compression from 'compression';
 
 const app = express();
 
+// Enable GZIP compression for all responses
+app.use(compression());
+
 app.use(express.json({ limit: '20mb' }));
 app.use(cookieParser());
+
+// CORS Configuration
+const allowedOrigin = process.env.ALLOWED_ORIGIN || 'http://localhost:5173';
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: allowedOrigin,
   credentials: true,
 }));
+
+// Helmet & Content Security Policy (CSP)
 app.use(helmet({
   crossOriginResourcePolicy: { policy: 'cross-origin' },
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      imgSrc: [
+        "'self'", 
+        "data:", 
+        "blob:", 
+        "https://covers.openlibrary.org", 
+        "https://apod.nasa.gov"
+      ],
+      scriptSrc: [
+        "'self'", 
+        "'unsafe-inline'", 
+        "'unsafe-eval'", 
+        "https://framer.com", 
+        "https://framerusercontent.com"
+      ],
+      connectSrc: [
+        "'self'",
+        "https://api.nasa.gov",
+        "http://api.open-notify.org"
+      ],
+      workerSrc: ["'self'", "blob:"],
+    },
+  },
 }));
-app.use(morgan('dev'));
+
+// Logging
+const isProd = process.env.NODE_ENV === 'production';
+app.use(morgan(isProd ? 'combined' : 'dev'));
+
+// Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  limit: 500, // limit each IP to 500 requests per windowMs
+  message: { error: 'Too many requests, please try again later.' }
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10, // strict limit for auth routes
+  message: { error: 'Too many login attempts, please try again later.' }
+});
+
+app.use('/api/', globalLimiter);
+app.use('/api/auth/login', authLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/library', libraryRoutes);
