@@ -1,7 +1,7 @@
 services:
   - type: web
     name: tardis-den-backend
-    env: node
+    runtime: node
     rootDir: backend
     buildCommand: npm install && npx prisma generate && npm run build && npx prisma db push
     startCommand: npm start
