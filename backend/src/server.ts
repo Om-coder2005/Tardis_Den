@@ -16,6 +16,7 @@ import rateLimit from 'express-rate-limit';
 import compression from 'compression';
 
 const app = express();
+app.set('trust proxy', 1);
 
 // Enable GZIP compression for all responses
 app.use(compression());
