@@ -1,19 +1,28 @@
 services:
   - type: web
-    name: tardis-den
+    name: tardis-den-backend
     env: node
-    buildCommand: npm install && npm run build
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build && npx prisma db push
     startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: DATABASE_URL
-        sync: false
+        value: file:/data/prod.db
+      - key: ALLOWED_ORIGIN
+        sync: false # You will need to enter your Vercel URL here in the Render Dashboard
       - key: JWT_SECRET
+        generateValue: true
+      - key: ADMIN_PASSKEY
         sync: false
       - key: NASA_API_KEY
         sync: false
-      - key: ADMIN_PASSKEY
-        sync: false
       - key: GEMINI_API_KEY
         sync: false
+    disk:
+      name: tardis-data
+      mountPath: /data
+      sizeGB: 1
