@@ -31,6 +31,9 @@ const npm = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const npmRunner = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const run = (args) => execFileSync(npm, args, { stdio: 'inherit', env: process.env, shell: true });
 
-run(['prisma', 'generate', '--schema', 'backend/prisma/schema.prisma']);
+const path = require('node:path');
+const schemaPath = path.resolve(__dirname, '../backend/prisma/schema.prisma');
+
+run(['prisma', 'generate', '--schema', schemaPath]);
 execFileSync(npmRunner, ['run', 'build'], { stdio: 'inherit', env: process.env, shell: true });
-run(['prisma', 'db', 'push', '--schema', 'backend/prisma/schema.prisma']);
+run(['prisma', 'db', 'push', '--schema', schemaPath]);
