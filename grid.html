@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body { margin: 0; background: #000; color: #fff; font-family: sans-serif; }
+  .container {
+    position: relative;
+    width: 1200px;
+    height: 675px; /* 16:9 */
+    background: url('frontend/src/assets/images/room.png') center/contain no-repeat;
+  }
+  .grid-x {
+    position: absolute;
+    top: 0; bottom: 0;
+    border-left: 1px solid rgba(255,255,255,0.2);
+  }
+  .grid-y {
+    position: absolute;
+    left: 0; right: 0;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+  .label-x { position: absolute; top: 0; font-size: 10px; color: red; }
+  .label-y { position: absolute; left: 0; font-size: 10px; color: cyan; }
+</style>
+</head>
+<body>
+<div class="container" id="box"></div>
+<script>
+  const box = document.getElementById('box');
+  for (let i = 0; i <= 100; i += 2) {
+    let gx = document.createElement('div');
+    gx.className = 'grid-x';
+    gx.style.left = i + '%';
+    box.appendChild(gx);
+
+    if (i % 10 === 0) {
+      let lx = document.createElement('div');
+      lx.className = 'label-x';
+      lx.style.left = i + '%';
+      lx.innerText = i;
+      box.appendChild(lx);
+    }
+
+    let gy = document.createElement('div');
+    gy.className = 'grid-y';
+    gy.style.top = i + '%';
+    box.appendChild(gy);
+
+    if (i % 10 === 0) {
+      let ly = document.createElement('div');
+      ly.className = 'label-y';
+      ly.style.top = i + '%';
+      ly.innerText = i;
+      box.appendChild(ly);
+    }
+  }
+</script>
+</body>
+</html>

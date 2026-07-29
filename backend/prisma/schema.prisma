@@ -1,0 +1,89 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Administrator {
+  id           String    @id @default(uuid())
+  passcodeHash String
+  createdAt    DateTime  @default(now())
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
+model LibraryRecord {
+  id         String   @id @default(uuid())
+  contentId  String   @unique
+  isFavorite Boolean  @default(false)
+  progress   Float    @default(0)
+  bookmarked Boolean  @default(false)
+  notes      String?  @db.Text
+  lastReadAt DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model JournalFolder {
+  id        String         @id @default(uuid())
+  name      String
+  entries   JournalEntry[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+model JournalEntry {
+  id             String          @id @default(uuid())
+  title          String          @default("Untitled Entry")
+  content        String          @db.Text
+  isDraft        Boolean         @default(true)
+  isFavorite     Boolean         @default(false)
+  type           String          @default("journal") // "journal" or "pinned"
+  linkedModule   String?         // e.g. "telescope", "library"
+  linkedEntityId String?         // ID of the related object
+  x              Float?
+  y              Float?
+  color          String?
+  folderId       String?
+  folder         JournalFolder?  @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  tags           String[]
+  versions       JournalVersion[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model JournalVersion {
+  id        String       @id @default(uuid())
+  entryId   String
+  entry     JournalEntry @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  content   String       @db.Text
+  createdAt DateTime     @default(now())
+}
+
+model PhotoAlbum {
+  id        String    @id @default(uuid())
+  name      String
+  photos    Photo[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Photo {
+  id         String      @id @default(uuid())
+  url        String
+  title      String      @default("New Memory")
+  archiveNote String?    @db.Text
+  isFavorite Boolean     @default(false)
+  albumId    String?
+  album      PhotoAlbum? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+}

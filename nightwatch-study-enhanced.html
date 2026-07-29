@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nightwatch Study — Interactive Isometric Room</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --wood-dark: #2A1A10;
+    --wood-mid: #4A2E1B;
+    --wood-light: #6B4226;
+    --wood-plank: #762C07;
+    --space-deep: #0A0E28;
+    --space-mid: #121838;
+    --space-black: #05070F;
+    --warm-amber: #FFB347;
+    --warm-cream: #FFD180;
+    --star-white: #F5F0E6;
+    --plant-green: #3E5C43;
+    --plant-light: #5C8062;
+    --paper: #EDE3D0;
+    --ui-glass: rgba(18, 24, 56, 0.72);
+    --font-display: 'JetBrains Mono', monospace;
+    --font-body: 'Inter', system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: var(--space-black);
+    font-family: var(--font-body);
+    overflow: hidden;
+    color: var(--star-white);
+  }
+
+  #app {
+    position: relative;
+    width: 100vw; height: 100vh;
+    display: flex; align-items: center; justify-content: center;
+    overflow: hidden;
+  }
+
+  #stage {
+    position: relative;
+    width: min(95vw, 1280px);
+    aspect-ratio: 1280 / 780;
+    max-height: 90vh;
+    cursor: grab;
+  }
+
+  #stage.dragging { cursor: grabbing; }
+
+  #starfield {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    border-radius: 16px;
+  }
+
+  #roomsvg {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    display: block;
+    filter: drop-shadow(0 40px 80px rgba(0, 0, 0, 0.7));
+  }
+
+  #scene-transform {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    transform-origin: 50% 50%;
+    transition: transform 0.35s ease;
+    will-change: transform;
+  }
+
+  #scene-transform.panning { transition: none; }
+
+  .interactive { cursor: pointer; }
+  .glow-target { transition: filter 0.25s ease; }
+  .interactive:hover .glow-target {
+    filter: drop-shadow(0 0 8px var(--warm-amber)) drop-shadow(0 0 16px rgba(255, 179, 71, 0.6));
+  }
+
+  .interactive:hover .hint-label { opacity: 1; transform: translateY(-4px); }
+  .hint-label {
+    opacity: 0; transition: all 0.2s ease;
+    pointer-events: none;
+  }
+
+  .flicker { animation: flick 3.2s ease-in-out infinite; }
+  @keyframes flick {
+    0%, 100% { opacity: 1; }
+    45% { opacity: 0.75; }
+    52% { opacity: 1; }
+    68% { opacity: 0.85; }
+  }
+
+  .dim-mode #scene-transform { filter: brightness(0.52) saturate(0.7); }
+  .dim-mode #starfield { filter: brightness(0.45); }
+
+  #dock {
+    position: absolute;
+    bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 10px;
+    background: var(--ui-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 179, 71, 0.28);
+    padding: 10px;
+    border-radius: 18px;
+    z-index: 40;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .dock-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--star-white);
+    font-family: var(--font-display);
+    font-size: 8.5px;
+    letter-spacing: 0.04em;
+    padding: 10px 13px 8px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    text-transform: uppercase;
+  }
+
+  .dock-btn svg { width: 20px; height: 20px; }
+  .dock-btn:hover { background: rgba(255, 179, 71, 0.16); border-color: rgba(255, 179, 71, 0.45); }
+  .dock-btn.active {
+    background: rgba(255, 179, 71, 0.26);
+    border-color: var(--warm-amber);
+    color: var(--warm-cream);
+  }
+
+  #title-card {
+    position: absolute; top: 20px; left: 20px;
+    z-index: 40;
+    font-family: var(--font-display);
+    letter-spacing: 0.06em;
+    pointer-events: none;
+  }
+
+  #title-card .eyebrow {
+    font-size: 9.5px;
+    color: var(--warm-amber);
+    text-transform: uppercase;
+    opacity: 0.88;
+  }
+
+  #title-card h1 {
+    margin: 3px 0 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--star-white);
+  }
+
+  .modal-overlay {
+    position: absolute; inset: 0;
+    background: rgba(5, 7, 15, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.22s ease;
+    z-index: 100;
+  }
+
+  .modal-overlay.open { opacity: 1; pointer-events: auto; }
+
+  .modal-card {
+    width: min(84%, 480px);
+    max-height: 76%;
+    overflow-y: auto;
+    background: linear-gradient(180deg, #1a2447, #0f1630);
+    border: 1px solid rgba(255, 179, 71, 0.4);
+    border-radius: 16px;
+    padding: 24px;
+    transform: translateY(16px) scale(0.96);
+    transition: transform 0.25s ease;
+    box-shadow: 0 25px 70px rgba(0, 0, 0, 0.7);
+  }
+
+  .modal-overlay.open .modal-card { transform: translateY(0) scale(1); }
+
+  .modal-card h2 {
+    font-family: var(--font-display);
+    font-size: 13.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--warm-amber);
+    margin: 0 0 6px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-card .sub {
+    font-size: 11px;
+    color: #a8b2d1;
+    margin-bottom: 16px;
+    font-family: var(--font-display);
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: #a8b2d1;
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 6px;
+  }
+
+  .modal-close:hover { color: var(--warm-cream); }
+
+  .term-line {
+    font-family: var(--font-display);
+    font-size: 12px;
+    margin: 0 0 10px;
+    color: #d9dff3;
+  }
+
+  .term-line .path { color: #6fcf97; }
+  .term-line .prompt { color: var(--warm-amber); }
+
+  .proj-item {
+    border: 1px solid rgba(255, 179, 71, 0.22);
+    border-radius: 9px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: rgba(255, 179, 71, 0.06);
+  }
+
+  .proj-item b { font-size: 12.5px; color: var(--star-white); }
+  .proj-item span { display: block; font-size: 11px; color: #b0b8d8; margin-top: 4px; }
+
+  .sky-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+
+  .sky-chip {
+    border: 1px solid rgba(255, 179, 71, 0.3);
+    border-radius: 9px;
+    padding: 11px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.03);
+    transition: background 0.15s ease;
+  }
+
+  .sky-chip:hover { background: rgba(255, 179, 71, 0.14); }
+  .sky-chip b { display: block; font-family: var(--font-display); font-size: 11px; color: var(--warm-cream); }
+  .sky-fact {
+    margin-top: 12px;
+    font-size: 11.5px;
+    color: #cad2ec;
+    min-height: 20px;
+    border-top: 1px dashed rgba(255, 179, 71, 0.3);
+    padding-top: 12px;
+  }
+
+  .book-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-size: 12px;
+  }
+
+  .book-row span:last-child {
+    color: #95a0be;
+    font-family: var(--font-display);
+    font-size: 9.5px;
+  }
+
+  .relax-panel { text-align: center; padding: 8px 0; }
+
+  .relax-orb {
+    width: 88px;
+    height: 88px;
+    margin: 8px auto 16px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 30% 28%, var(--warm-cream), var(--warm-amber) 52%, #8b5a1a 100%);
+    box-shadow: 0 0 35px rgba(255, 179, 71, 0.5), inset -8px -8px 20px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .relax-orb.playing { animation: pulseOrb 1.6s ease-in-out infinite; }
+
+  @keyframes pulseOrb { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.1); } }
+
+  .relax-btn {
+    background: var(--warm-amber);
+    color: #2A1A10;
+    border: none;
+    border-radius: 22px;
+    padding: 10px 24px;
+    font-family: var(--font-display);
+    font-size: 11.5px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    transition: background 0.18s ease;
+  }
+
+  .relax-btn:hover { background: var(--warm-cream); }
+
+  #info-body p {
+    font-size: 12.5px;
+    line-height: 1.65;
+    color: #cad2ec;
+    margin: 0 0 12px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .flicker, .relax-orb.playing { animation: none !important; }
+    #scene-transform { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="stage">
+    <canvas id="starfield"></canvas>
+    <div id="scene-transform">
+      <svg id="roomsvg" viewBox="0 0 1280 780" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet"></svg>
+    </div>
+
+    <div id="title-card">
+      <div class="eyebrow">Sanctuary — Observational Study</div>
+      <h1>Hover &amp; Click to Explore</h1>
+    </div>
+
+    <div id="dock">
+      <button class="dock-btn" id="btn-audio" title="Toggle ambient audio">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M17 8a5 5 0 010 8M19.5 5.5a9 9 0 010 13"/></svg>
+        Audio
+      </button>
+      <button class="dock-btn" id="btn-lights" title="Toggle room lights">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.6.45 1 1.15 1 1.9V16h5v-.2c0-.75.4-1.45 1-1.9A6 6 0 0012 3z"/></svg>
+        Lights
+      </button>
+      <button class="dock-btn" id="btn-reset" title="Reset view">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12a9 9 0 1 1 3 6.7M3 4v6h6"/></svg>
+        Reset
+      </button>
+      <button class="dock-btn" id="btn-info" title="About">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="9"/><path d="M12 16v-5M12 8h.01"/></svg>
+        Info
+      </button>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modal-monitor">
+    <div class="modal-card">
+      <h2>Workstation <button class="modal-close" data-close>&times;</button></h2>
+      <div class="sub">Terminal output — active projects</div>
+      <p class="term-line"><span class="prompt">~/dev $</span> ls <span class="path">portfolio/</span></p>
+      <div class="proj-item"><b>Celestial Navigator</b><span>Interactive star mapping tool with constellation data overlay</span></div>
+      <div class="proj-item"><b>Orbit Visualizer</b><span>Real-time satellite trajectory renderer using Kepler elements</span></div>
+      <div class="proj-item"><b>Night Sky Archive</b><span>Procedural dark-sky photography reference with metadata</span></div>
+      <p class="term-line" style="margin-top: 16px;"><span class="prompt">~/dev $</span> echo "status: building..." <span style="opacity: 0.5;">_</span></p>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-telescope">
+    <div class="modal-card">
+      <h2>Stargazing Mode <button class="modal-close" data-close>&times;</button></h2>
+      <div class="sub">Tap to discover constellations</div>
+      <div class="sky-grid">
+        <div class="sky-chip" data-fact="Anchored by Rigel and Betelgeuse, best viewed in winter from the Northern Hemisphere.">
+          <b>Orion</b>The Hunter
+        </div>
+        <div class="sky-chip" data-fact="Its distinctive plough asterism guides navigation toward Polaris, the pole star.">
+          <b>Ursa Major</b>The Great Bear
+        </div>
+        <div class="sky-chip" data-fact="Forms a distinctive W-shape, marking the royal throne in ancient lore.">
+          <b>Cassiopeia</b>The Queen
+        </div>
+        <div class="sky-chip" data-fact="A luminous band spanning 30 degrees—our vantage point within the galactic disk.">
+          <b>Milky Way</b>Our Galaxy
+        </div>
+      </div>
+      <div class="sky-fact" id="sky-fact-text">Click a constellation to read its story.</div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-bookcase">
+    <div class="modal-card">
+      <h2>Reading Collection <button class="modal-close" data-close>&times;</button></h2>
+      <div class="sub">Selected volumes — recent and current reads</div>
+      <div class="book-row"><span>Celestial Mechanics Primer</span><span>STUDY</span></div>
+      <div class="book-row"><span>The Lighthouse Keepers</span><span>FICTION</span></div>
+      <div class="book-row"><span>Atlas: Southern Skies</span><span>REFERENCE</span></div>
+      <div class="book-row"><span>Deep Field Observations</span><span>RESEARCH</span></div>
+      <div class="book-row"><span>Untitled (in progress)</span><span>DRAFT</span></div>
+      <div class="book-row"><span>Photographic Index</span><span>ARCHIVE</span></div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-relax">
+    <div class="modal-card">
+      <h2>Rest &amp; Reflect <button class="modal-close" data-close>&times;</button></h2>
+      <div class="sub">Ambient soundscape — lo-fi instrumental</div>
+      <div class="relax-panel">
+        <div class="relax-orb" id="relax-orb"></div>
+        <button class="relax-btn" id="relax-toggle">Play ambient</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="modal-info">
+    <div class="modal-card" id="info-body">
+      <h2>About This Space <button class="modal-close" data-close>&times;</button></h2>
+      <p>A small study built for looking up—shelves on one wall, a desk on another, a wide window revealing the night sky, and a comfortable corner for sitting still.</p>
+      <p>Hover objects to highlight them. Click to open their details. Drag to pan, scroll to zoom. Use the dock to adjust the atmosphere.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  /* Palette */
+  const PAL = {
+    woodDark: "#2A1A10",
+    woodMid: "#4A2E1B",
+    woodLight: "#6B4226",
+    woodPlank: "#762C07",
+    navyDeep: "#0A0E28",
+    navyMid: "#121838",
+    navyBlack: "#05070F",
+    amber: "#FFB347",
+    cream: "#FFD180",
+    star: "#F5F0E6",
+    plant: "#3E5C43",
+    plantLight: "#5C8062",
+    paper: "#EDE3D0",
+    fabric: "#33406B",
+    fabricLight: "#4B5A93",
+    rugBase: "#3A2E52",
+    rugAccent: "#8A5A3A",
+    metal: "#8A8F9E"
+  };
+
+  function shade(hex, pct) {
+    let c = hex.replace("#", "");
+    if (c.length === 3) c = c.split("").map(x => x + x).join("");
+    let num = parseInt(c, 16);
+    let r = (num >> 16), g = (num >> 8 & 0xff), b = (num & 0xff);
+    const amt = Math.round(2.55 * pct);
+    r = Math.min(255, Math.max(0, r + amt));
+    g = Math.min(255, Math.max(0, g + amt));
+    b = Math.min(255, Math.max(0, b + amt));
+    return "#" + (r << 16 | g << 8 | b).toString(16).padStart(6, "0");
+  }
+
+  /* Isometric projection */
+  const TILE = 44;
+  const ORIGIN = { x: 640, y: 260 };
+  const COS30 = Math.cos(Math.PI / 6);
+  const SIN30 = 0.5;
+
+  function proj(w, d, z) {
+    const sx = (d - w) * COS30 * TILE;
+    const sy = (d + w) * SIN30 * TILE - z * TILE;
+    return [ORIGIN.x + sx, ORIGIN.y + sy];
+  }
+
+  function pts(arr3d) {
+    return arr3d.map(p => proj(p[0], p[1], p[2]).join(",")).join(" ");
+  }
+
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("roomsvg");
+
+  function el(tag, attrs) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    return e;
+  }
+
+  function group(attrs) {
+    return el("g", attrs || {});
+  }
+
+  function poly(points3d, fill, extra) {
+    const p = el("polygon", Object.assign({
+      points: pts(points3d),
+      fill: fill,
+      stroke: "rgba(0,0,0,0.2)",
+      "stroke-width": "0.8"
+    }, extra || {}));
+    return p;
+  }
+
+  /* Box with three visible faces */
+  function isoBox(parent, w0, w1, d0, d1, z0, z1, baseColor, opts) {
+    opts = opts || {};
+    const top = [[w0, d0, z1], [w1, d0, z1], [w1, d1, z1], [w0, d1, z1]];
+    const faceW = [[w1, d0, z0], [w1, d1, z0], [w1, d1, z1], [w1, d0, z1]];
+    const faceD = [[w0, d1, z0], [w1, d1, z0], [w1, d1, z1], [w0, d1, z1]];
+    const g = group({ class: opts.cls || "" });
+    g.appendChild(poly(faceW, shade(baseColor, -25)));
+    g.appendChild(poly(faceD, shade(baseColor, -8)));
+    g.appendChild(poly(top, shade(baseColor, opts.topLift !== undefined ? opts.topLift : 16)));
+    parent.appendChild(g);
+    return g;
+  }
+
+  function flatQuad(parent, points3d, fill, extra) {
+    const p = poly(points3d, fill, extra);
+    parent.appendChild(p);
+    return p;
+  }
+
+  function tube(parent, p1, p2, thickness, color) {
+    const a = proj(p1[0], p1[1], p1[2]);
+    const b = proj(p2[0], p2[1], p2[2]);
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1;
+    const nx = -dy / len * thickness, ny = dx / len * thickness;
+    const p = el("polygon", {
+      points: `${a[0] + nx},${a[1] + ny} ${b[0] + nx * 0.7},${b[1] + ny * 0.7} ${b[0] - nx * 0.7},${b[1] - ny * 0.7} ${a[0] - nx},${a[1] - ny}`,
+      fill: color,
+      stroke: "rgba(0,0,0,0.3)",
+      "stroke-width": "0.6"
+    });
+    parent.appendChild(p);
+    return p;
+  }
+
+  function thinLine(parent, p1, p2, color, width) {
+    const a = proj(p1[0], p1[1], p1[2]);
+    const b = proj(p2[0], p2[1], p2[2]);
+    parent.appendChild(el("line", {
+      x1: a[0], y1: a[1], x2: b[0], y2: b[1],
+      stroke: color, "stroke-width": width, "stroke-linecap": "round"
+    }));
+  }
+
+  function glowLight(parent, w, d, z, r, color, cls) {
+    const [x, y] = proj(w, d, z);
+    const g = group({ class: cls || "" });
+    const grad = el("radialGradient", { id: "glow_" + Math.random().toString(36).substr(2) });
+    grad.appendChild(el("stop", { offset: "0%", "stop-color": color, "stop-opacity": "0.4" }));
+    grad.appendChild(el("stop", { offset: "100%", "stop-color": color, "stop-opacity": "0" }));
+    parent.appendChild(grad);
+    g.appendChild(el("circle", { cx: x, cy: y, r: r * 3.2, fill: `url(#${grad.id})` }));
+    g.appendChild(el("circle", { cx: x, cy: y, r: r, fill: color, opacity: "0.85" }));
+    parent.appendChild(g);
+    return g;
+  }
+
+  /* Layer groups */
+  const gFloor = group({ id: "g-floor" });
+  const gWalls = group({ id: "g-walls" });
+  const gWallDeco = group({ id: "g-walldeco" });
+  const gBack = group({ id: "g-back" });
+  const gMid = group({ id: "g-mid" });
+  const gFront = group({ id: "g-front" });
+  const gLights = group({ id: "g-lights" });
+
+  svg.appendChild(gFloor);
+  svg.appendChild(gWalls);
+  svg.appendChild(gWallDeco);
+  svg.appendChild(gBack);
+  svg.appendChild(gMid);
+  svg.appendChild(gFront);
+  svg.appendChild(gLights);
+
+  /* ========== FLOOR ========== */
+  flatQuad(gFloor, [[0, 0, 0], [9, 0, 0], [9, 9, 0], [0, 9, 0]], PAL.woodMid);
+  for (let i = 1; i < 9; i++) {
+    thinLine(gFloor, [0, i, 0], [9, i, 0], "rgba(0,0,0,0.12)", 1.3);
+  }
+
+  /* ========== WALLS ========== */
+  flatQuad(gWalls, [[0, 0, 0], [9, 0, 0], [9, 0, 6], [0, 0, 6]], PAL.woodDark);
+  for (let i = 1; i < 9; i++) {
+    thinLine(gWalls, [i, 0, 0], [i, 0, 6], "rgba(0,0,0,0.15)", 1.1);
+  }
+
+  flatQuad(gWalls, [[0, 0, 0], [0, 9, 0], [0, 9, 6], [0, 0, 6]], PAL.navyMid);
+  flatQuad(gWalls, [[0, 2.2, 6], [0, 3.0, 7.2], [0, 6.0, 7.2], [0, 6.8, 6]], PAL.navyDeep);
+
+  /* ========== WINDOW ========== */
+  const windowPts = [[0, 1.2, 1.0], [0, 7.3, 1.0], [0, 7.3, 5.8], [0, 1.2, 5.8]];
+  flatQuad(gWallDeco, windowPts, "rgba(255,255,255,0.025)", { stroke: "none" });
+
+  for (let i = 1; i < 6; i++) {
+    const dd = 1.2 + (7.3 - 1.2) * i / 6;
+    thinLine(gWallDeco, [0, dd, 1.0], [0, dd, 5.8], "rgba(255,179,71,0.32)", 2.4);
+  }
+
+  for (let i = 1; i < 4; i++) {
+    const zz = 1.0 + (5.8 - 1.0) * i / 4;
+    thinLine(gWallDeco, [0, 1.2, zz], [0, 7.3, zz], "rgba(255,179,71,0.32)", 2.4);
+  }
+
+  flatQuad(gWallDeco, windowPts, "none", {
+    stroke: "#FFB347", "stroke-width": 3.2, "stroke-opacity": 0.6
+  });
+
+  flatQuad(gWallDeco, [[0, 2.6, 6.15], [0, 3.15, 7.1], [0, 5.85, 7.1], [0, 6.4, 6.15]], 
+    "rgba(255,255,255,0.02)", { stroke: "#FFB347", "stroke-width": 2.2, "stroke-opacity": 0.45 });
+
+  /* ========== POSTERS ========== */
+  function poster(w0, w1, z0, z1, bgColor) {
+    flatQuad(gWallDeco, [[w0, 0, z0], [w1, 0, z0], [w1, 0, z1], [w0, 0, z1]], PAL.woodLight);
+    const pad = 0.15;
+    flatQuad(gWallDeco, [[w0 + pad, 0, z0 + pad], [w1 - pad, 0, z0 + pad], [w1 - pad, 0, z1 - pad], [w0 + pad, 0, z1 - pad]], 
+      bgColor, { stroke: "none" });
+  }
+
+  poster(4.5, 5.5, 2.4, 4.0, "#0E1330");
+  poster(5.8, 6.8, 2.7, 3.7, "#182347");
+  poster(4.0, 4.8, 0.9, 2.0, "#1A2850");
+
+  /* ========== FAIRY LIGHTS ========== */
+  function fairyLights(edgeA, edgeB, count) {
+    for (let i = 0; i <= count; i++) {
+      const t = i / count;
+      const w = edgeA[0] + (edgeB[0] - edgeA[0]) * t;
+      const d = edgeA[1] + (edgeB[1] - edgeA[1]) * t;
+      const sag = Math.sin(t * Math.PI) * 0.22;
+      const z = 6.05 - sag;
+      const c = glowLight(gLights, w, d, z, 2.2, PAL.cream, "flicker");
+      c.style.animationDelay = (t * 2.8).toFixed(2) + "s";
+    }
+  }
+
+  fairyLights([0.2, 0.2], [8.8, 0.2], 16);
+  fairyLights([0.2, 0.2], [0.2, 8.8], 16);
+
+  /* ========== BOOKCASE & BED (LEFT/BACK) ========== */
+
+  /* Bookcase */
+  const bookcase = isoBox(gBack, 1.0, 3.2, 0.08, 0.68, 0, 4.6, PAL.woodLight, { cls: "interactive glow-target" });
+  bookcase.setAttribute("data-obj", "bookcase");
+
+  /* Books on shelves */
+  const bookColors = ["#C44536", "#5A7C4A", "#D9A441", "#6E5AA3", "#B5432E", "#3F7E7A", "#C27C4A", "#4B6B52"];
+  for (let s = 0; s < 5; s++) {
+    const z0 = 0.35 + s * 0.85;
+    let w = 1.15;
+    let ci = 0;
+    while (w < 3.15) {
+      const bw = 0.11 + Math.random() * 0.12;
+      if (w + bw > 3.15) break;
+      flatQuad(gBack, [[w, 0.68, z0], [w + bw, 0.68, z0], [w + bw, 0.68, z0 + 0.78], [w, 0.68, z0 + 0.78]], 
+        bookColors[ci % bookColors.length]);
+      w += bw + 0.025;
+      ci++;
+    }
+    thinLine(gBack, [1.0, 0.72, z0 - 0.04], [3.2, 0.72, z0 - 0.04], "rgba(0,0,0,0.4)", 2.2);
+  }
+
+  /* Plants on bookcase top */
+  isoBox(gBack, 1.2, 1.55, 0.08, 0.45, 4.6, 4.95, PAL.plant, { topLift: 22 });
+  isoBox(gBack, 2.7, 3.0, 0.08, 0.45, 4.6, 4.82, PAL.plantLight, { topLift: 22 });
+
+  /* Rolling ladder */
+  tube(gBack, [3.4, 0.12, 0.15], [3.75, 0.12, 4.6], 0.05, PAL.woodLight);
+  tube(gBack, [3.75, 0.45, 0.15], [4.1, 0.45, 4.6], 0.05, PAL.woodLight);
+  for (let r = 0; r < 7; r++) {
+    const zz = 0.5 + r * 0.58;
+    thinLine(gBack, [3.42, 0.13, zz], [3.77, 0.44, zz], PAL.woodLight, 2.6);
+  }
+
+  /* BED */
+  const bed = isoBox(gBack, 0.6, 4.2, 0.25, 3.4, 0, 1.08, PAL.woodDark, { cls: "interactive glow-target" });
+  bed.setAttribute("data-obj", "relax");
+
+  isoBox(gBack, 0.8, 4.0, 0.35, 3.3, 1.08, 1.35, "#E8D9CC");
+  isoBox(gBack, 0.95, 2.0, 0.5, 1.4, 1.35, 1.62, "#F0EDE3");
+  isoBox(gBack, 3.2, 3.85, 0.55, 1.2, 1.35, 1.58, "#F5F1E8");
+
+  /* Astronaut plushie */
+  isoBox(gBack, 3.15, 3.65, 1.8, 2.2, 1.35, 1.68, "#DDE8F5");
+  glowLight(gLights, 3.4, 2.0, 1.78, 5.5, "#DDE8F5");
+
+  /* Nightstand + lamp */
+  isoBox(gBack, 0.1, 0.75, 0.1, 0.75, 0, 0.9, PAL.woodMid);
+  glowLight(gLights, 0.425, 0.425, 1.15, 8.5, PAL.cream, "flicker");
+  isoBox(gBack, 0.3, 0.6, 0.3, 0.6, 0.9, 1.05, PAL.woodLight);
+
+  /* Console at foot of bed */
+  isoBox(gBack, 0.8, 3.5, 3.6, 4.2, 0, 0.72, PAL.woodMid);
+  isoBox(gBack, 0.95, 1.35, 3.72, 4.08, 0.72, 1.12, PAL.plant, { topLift: 24 });
+  isoBox(gBack, 2.1, 2.4, 3.72, 4.08, 0.72, 1.08, PAL.plantLight, { topLift: 22 });
+  glowLight(gLights, 3.0, 3.95, 0.95, 6.2, PAL.amber, "flicker");
+
+  /* ========== DESK & TELESCOPE (RIGHT/BACK) ========== */
+
+  const desk = isoBox(gMid, 0, 1.1, 4.4, 7.5, 0, 1.08, PAL.woodMid, { cls: "interactive glow-target" });
+  desk.setAttribute("data-obj", "monitor");
+
+  /* Monitor */
+  isoBox(gMid, 0.15, 0.35, 5.4, 6.2, 1.08, 1.95, "#1B1F2E");
+  flatQuad(gMid, [[0.35, 5.5, 1.15], [0.35, 6.1, 1.15], [0.35, 6.1, 1.85], [0.35, 5.5, 1.85]], "#3FA9F5", { stroke: "none" });
+  glowLight(gLights, 0.38, 5.8, 1.5, 8.2, "rgba(63,169,245,0.95)");
+
+  /* Desk lamp */
+  tube(gMid, [0.25, 7.2, 1.08], [0.25, 7.2, 1.68], 0.055, PAL.metal);
+  tube(gMid, [0.25, 7.2, 1.63], [0.4, 6.85, 1.78], 0.05, PAL.metal);
+  glowLight(gLights, 0.42, 6.8, 1.88, 8.8, PAL.cream, "flicker");
+
+  /* Mug & journal */
+  isoBox(gMid, 0.58, 0.72, 6.7, 6.88, 1.08, 1.28, "#D9613F");
+  isoBox(gMid, 0.48, 0.85, 6.05, 6.4, 1.08, 1.1, PAL.paper);
+
+  /* Globe */
+  const [gx, gy] = proj(0.58, 5.2, 1.08);
+  const globeG = group();
+  globeG.appendChild(el("circle", { cx: gx, cy: gy, r: 6.5, fill: "#4A7BA7", stroke: "#3A6B92", "stroke-width": "0.5" }));
+  globeG.appendChild(el("circle", { cx: gx - 2, cy: gy - 2, r: 2.2, fill: "#6BA548", opacity: "0.8" }));
+  globeG.appendChild(el("circle", { cx: gx + 3, cy: gy + 1.5, r: 1.8, fill: "#8B6A47", opacity: "0.7" }));
+  gMid.appendChild(globeG);
+
+  /* Desk chair */
+  isoBox(gMid, 1.6, 2.25, 5.0, 5.7, 0.6, 0.78, PAL.fabric);
+  isoBox(gMid, 2.0, 2.25, 5.0, 5.7, 0.78, 1.65, shade(PAL.fabric, -8));
+  for (let i = 0; i < 4; i++) {
+    const wi = 1.6 + (2.25 - 1.6) * (i % 2);
+    const di = 5.0 + (5.7 - 5.0) * Math.floor(i / 2);
+    tube(gMid, [wi, di, 0], [wi, di, 0.6], 0.034, PAL.metal);
+  }
+
+  /* TELESCOPE */
+  const scope = group({ class: "interactive glow-target" });
+  scope.setAttribute("data-obj", "telescope");
+
+  tube(scope, [1.25, 2.1, 0], [0.8, 2.45, 2.8], 0.038, PAL.metal);
+  tube(scope, [1.6, 2.65, 0], [0.8, 2.45, 2.8], 0.038, PAL.metal);
+  tube(scope, [1.25, 3.1, 0], [0.8, 2.45, 2.8], 0.038, PAL.metal);
+
+  tube(scope, [0.8, 2.45, 2.8], [0.12, 1.35, 4.8], 0.16, "#C69A4E");
+  glowLight(gLights, 0.08, 1.25, 4.92, 4.2, "#FFE9BE");
+
+  gMid.appendChild(scope);
+
+  /* ========== CENTER RUG & FURNITURE ========== */
+
+  flatQuad(gFront, [[1.5, 1.7, 0.01], [6.5, 1.7, 0.01], [6.5, 6.8, 0.01], [1.5, 6.8, 0.01]], PAL.rugBase);
+  flatQuad(gFront, [[2.0, 2.1, 0.015], [6.0, 2.1, 0.015], [6.0, 6.4, 0.015], [2.0, 6.4, 0.015]], "none", {
+    stroke: PAL.rugAccent, "stroke-width": 2.6, "stroke-opacity": 0.75
+  });
+  flatQuad(gFront, [[3.2, 3.8, 0.02], [4.8, 3.8, 0.02], [4.8, 5.0, 0.02], [3.2, 5.0, 0.02]], "none", {
+    stroke: PAL.amber, "stroke-width": 1.6, "stroke-opacity": 0.5
+  });
+
+  /* Coffee table */
+  isoBox(gFront, 3.0, 4.2, 3.6, 4.8, 0, 0.48, PAL.woodLight);
+  isoBox(gFront, 3.2, 3.65, 3.8, 4.05, 0.48, 0.68, PAL.paper);
+  isoBox(gFront, 3.7, 4.0, 4.2, 4.5, 0.48, 0.7, "#3A2E24");
+  glowLight(gLights, 3.85, 4.35, 0.8, 7.2, PAL.cream, "flicker");
+
+  /* Bean bag */
+  const bag = group({ class: "interactive glow-target" });
+  bag.setAttribute("data-obj", "relax");
+
+  const [bx, by] = proj(5.5, 5.2, 0.025);
+  const [btx, bty] = proj(5.5, 5.2, 1.15);
+  const brw = 75, brh = 45;
+
+  bag.appendChild(el("ellipse", { cx: bx, cy: by, rx: brw, ry: brh, fill: PAL.fabric, opacity: "0.95" }));
+  bag.appendChild(el("ellipse", { cx: (bx + btx) / 2, cy: (by + bty) / 2 - 8, rx: brw * 0.88, ry: brh * 0.88, fill: PAL.fabricLight }));
+  bag.appendChild(el("ellipse", { cx: btx, cy: bty - 12, rx: brw * 0.65, ry: brh * 0.65, fill: shade(PAL.fabricLight, 12) }));
+
+  const starPatterns = [
+    [-20, -8], [12, -18], [-6, 6], [22, 4], [-28, 12], [8, -12]
+  ];
+
+  starPatterns.forEach(pos => {
+    bag.appendChild(el("circle", {
+      cx: btx + pos[0], cy: bty - 12 + pos[1],
+      r: 1.8, fill: PAL.star, opacity: "0.9"
+    }));
+  });
+
+  gFront.appendChild(bag);
+
+  /* Lanterns */
+  glowLight(gLights, 0.9, 3.4, 0.32, 6.5, PAL.amber, "flicker");
+  isoBox(gFront, 0.75, 1.05, 3.25, 3.55, 0, 0.32, "#3A2E24");
+
+  glowLight(gLights, 6.6, 4.5, 0.32, 6.5, PAL.amber, "flicker");
+  isoBox(gFront, 6.45, 6.75, 4.35, 4.65, 0, 0.32, "#3A2E24");
+
+  /* ========== STAR CANVAS ========== */
+
+  const canvas = document.getElementById("starfield");
+  const ctx = canvas.getContext("2d");
+  let stars = [];
+  let shooting = null;
+
+  function resizeCanvas() {
+    const stage = document.getElementById("stage");
+    const rect = stage.getBoundingClientRect();
+    canvas.width = rect.width * devicePixelRatio;
+    canvas.height = rect.height * devicePixelRatio;
+    canvas.style.width = rect.width + "px";
+    canvas.style.height = rect.height + "px";
+    ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    initStars(rect.width, rect.height);
+  }
+
+  function initStars(w, h) {
+    stars = [];
+    const n = Math.floor((w * h) / 2200);
+    for (let i = 0; i < n; i++) {
+      stars.push({
+        x: Math.random() * w,
+        y: Math.random() * h * 0.78,
+        r: Math.random() * 1.5 + 0.35,
+        base: Math.random() * 0.55 + 0.35,
+        speed: Math.random() * 0.025 + 0.008,
+        phase: Math.random() * Math.PI * 2
+      });
+    }
+  }
+
+  let t0 = performance.now();
+
+  function drawSky() {
+    const w = canvas.width / devicePixelRatio, h = canvas.height / devicePixelRatio;
+
+    const grad = ctx.createLinearGradient(0, 0, 0, h);
+    grad.addColorStop(0, PAL.navyBlack);
+    grad.addColorStop(0.5, PAL.navyDeep);
+    grad.addColorStop(1, PAL.navyMid);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, w, h);
+
+    /* Galaxy band */
+    ctx.save();
+    ctx.globalAlpha = 0.18;
+    const bandGrad = ctx.createLinearGradient(0, 0, w, h * 0.65);
+    bandGrad.addColorStop(0, "rgba(180,150,255,0)");
+    bandGrad.addColorStop(0.5, "rgba(210,180,255,0.55)");
+    bandGrad.addColorStop(1, "rgba(180,150,255,0)");
+    ctx.fillStyle = bandGrad;
+    ctx.translate(w * 0.32, -20);
+    ctx.rotate(0.48);
+    ctx.fillRect(-w, 0, w * 2, h * 0.4);
+    ctx.restore();
+
+    /* Moon */
+    const mx = w * 0.82, my = h * 0.2, mr = Math.min(w, h) * 0.058;
+    ctx.save();
+    ctx.shadowColor = "rgba(245,240,230,0.6)";
+    ctx.shadowBlur = 28;
+    ctx.fillStyle = "#F1EFE6";
+    ctx.beginPath();
+    ctx.arc(mx, my, mr, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = PAL.navyDeep;
+    ctx.beginPath();
+    ctx.arc(mx + mr * 0.4, my - mr * 0.15, mr * 0.88, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+
+    /* Stars */
+    const now = performance.now();
+    const dt = (now - t0) / 1000;
+
+    stars.forEach(s => {
+      const tw = s.base + Math.sin(dt * s.speed * 60 + s.phase) * 0.38;
+      ctx.globalAlpha = Math.max(0.12, Math.min(1, tw));
+      ctx.fillStyle = PAL.star;
+      ctx.beginPath();
+      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.globalAlpha = 1;
+
+    /* Shooting star */
+    if (!shooting && Math.random() < 0.0028) {
+      shooting = {
+        x: Math.random() * w * 0.5 + w * 0.2,
+        y: Math.random() * h * 0.22,
+        vx: 6.5 + Math.random() * 3.5,
+        vy: 2.6 + Math.random() * 0.8,
+        life: 0
+      };
+    }
+
+    if (shooting) {
+      shooting.x += shooting.vx;
+      shooting.y += shooting.vy;
+      shooting.life += 1;
+      ctx.save();
+      ctx.strokeStyle = "rgba(245,240,230,0.92)";
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(shooting.x, shooting.y);
+      ctx.lineTo(shooting.x - shooting.vx * 8, shooting.y - shooting.vy * 8);
+      ctx.stroke();
+      ctx.restore();
+      if (shooting.life > 45 || shooting.x > w + 60) shooting = null;
+    }
+
+    requestAnimationFrame(drawSky);
+  }
+
+  window.addEventListener("resize", resizeCanvas);
+  resizeCanvas();
+  requestAnimationFrame(drawSky);
+
+  /* ========== HINTS ========== */
+
+  function addHint(objName, w, d, z, text) {
+    const node = svg.querySelector(`[data-obj="${objName}"]`);
+    if (!node) return;
+    const [x, y] = proj(w, d, z);
+    const g = el("g", { class: "hint-label" });
+    const rect = el("rect", {
+      x: x - 42, y: y - 26, width: 84, height: 20,
+      rx: 10, fill: "rgba(5,7,15,0.8)", stroke: "rgba(255,179,71,0.45)", "stroke-width": "0.8"
+    });
+    const txt = el("text", {
+      x: x, y: y - 12, "text-anchor": "middle", "font-size": "10",
+      fill: "#FFD180", "font-family": "var(--font-display)", "font-weight": "600"
+    });
+    txt.textContent = text;
+    g.appendChild(rect);
+    g.appendChild(txt);
+    node.appendChild(g);
+  }
+
+  addHint("bookcase", 2.1, 0.4, 4.6, "EXPLORE");
+  addHint("monitor", 0.55, 5.8, 1.95, "PROJECTS");
+  addHint("telescope", 0.4, 2.6, 4.8, "OBSERVE");
+  addHint("relax", 5.5, 5.2, 1.15, "UNWIND");
+
+  /* ========== MODALS ========== */
+
+  const modals = {
+    monitor: document.getElementById("modal-monitor"),
+    telescope: document.getElementById("modal-telescope"),
+    bookcase: document.getElementById("modal-bookcase"),
+    relax: document.getElementById("modal-relax"),
+    info: document.getElementById("modal-info")
+  };
+
+  function openModal(name) {
+    const m = modals[name];
+    if (!m) return;
+    Object.values(modals).forEach(x => x.classList.remove("open"));
+    m.classList.add("open");
+  }
+
+  function closeAll() {
+    Object.values(modals).forEach(x => x.classList.remove("open"));
+  }
+
+  svg.querySelectorAll(".interactive").forEach(g => {
+    g.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const name = g.getAttribute("data-obj");
+      openModal(name);
+    });
+  });
+
+  document.querySelectorAll("[data-close]").forEach(b => {
+    b.addEventListener("click", closeAll);
+  });
+
+  document.querySelectorAll(".modal-overlay").forEach(ov => {
+    ov.addEventListener("click", (e) => {
+      if (e.target === ov) closeAll();
+    });
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAll();
+  });
+
+  /* Sky chips */
+  document.querySelectorAll(".sky-chip").forEach(chip => {
+    chip.addEventListener("click", () => {
+      document.getElementById("sky-fact-text").textContent = chip.getAttribute("data-fact");
+    });
+  });
+
+  /* ========== CONTROLS ========== */
+
+  document.getElementById("btn-info").addEventListener("click", () => openModal("info"));
+
+  let lightsOn = true;
+  const appEl = document.getElementById("app");
+
+  document.getElementById("btn-lights").addEventListener("click", function () {
+    lightsOn = !lightsOn;
+    appEl.classList.toggle("dim-mode", !lightsOn);
+    this.classList.toggle("active", !lightsOn);
+  });
+
+  /* Audio */
+  let audioCtx = null, audioNodes = null, audioPlaying = false;
+
+  function startAmbient() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctxA = audioCtx;
+    const master = ctxA.createGain();
+    master.gain.value = 0.0;
+    master.connect(ctxA.destination);
+    master.gain.linearRampToValueAtTime(0.11, ctxA.currentTime + 1.4);
+
+    const osc1 = ctxA.createOscillator();
+    osc1.type = "sine";
+    osc1.frequency.value = 110;
+
+    const osc2 = ctxA.createOscillator();
+    osc2.type = "sine";
+    osc2.frequency.value = 164.8;
+
+    const lfo = ctxA.createOscillator();
+    lfo.type = "sine";
+    lfo.frequency.value = 0.075;
+
+    const lfoGain = ctxA.createGain();
+    lfoGain.gain.value = 7.2;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc1.frequency);
+
+    const filt = ctxA.createBiquadFilter();
+    filt.type = "lowpass";
+    filt.frequency.value = 820;
+
+    osc1.connect(filt);
+    osc2.connect(filt);
+    filt.connect(master);
+
+    const bufSize = 2 * ctxA.sampleRate;
+    const buf = ctxA.createBuffer(1, bufSize, ctxA.sampleRate);
+    const data = buf.getChannelData(0);
+    for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1) * 0.12;
+
+    const noise = ctxA.createBufferSource();
+    noise.buffer = buf;
+    noise.loop = true;
+
+    const noiseFilt = ctxA.createBiquadFilter();
+    noiseFilt.type = "lowpass";
+    noiseFilt.frequency.value = 480;
+
+    const noiseGain = ctxA.createGain();
+    noiseGain.gain.value = 0.45;
+
+    noise.connect(noiseFilt);
+    noiseFilt.connect(noiseGain);
+    noiseGain.connect(master);
+
+    osc1.start();
+    osc2.start();
+    lfo.start();
+    noise.start();
+
+    audioNodes = { master, osc1, osc2, lfo, noise };
+  }
+
+  function stopAmbient() {
+    if (!audioNodes) return;
+    const now = audioCtx.currentTime;
+    audioNodes.master.gain.linearRampToValueAtTime(0, now + 0.7);
+    setTimeout(() => {
+      try {
+        audioNodes.osc1.stop();
+        audioNodes.osc2.stop();
+        audioNodes.lfo.stop();
+        audioNodes.noise.stop();
+      } catch (e) {}
+      audioNodes = null;
+    }, 750);
+  }
+
+  function toggleAudio() {
+    audioPlaying = !audioPlaying;
+    if (audioPlaying) startAmbient(); else stopAmbient();
+    document.getElementById("btn-audio").classList.toggle("active", audioPlaying);
+    const orb = document.getElementById("relax-orb");
+    if (orb) orb.classList.toggle("playing", audioPlaying);
+    const relaxBtn = document.getElementById("relax-toggle");
+    if (relaxBtn) {
+      relaxBtn.textContent = audioPlaying ? "Pause ambient" : "Play ambient";
+    }
+  }
+
+  document.getElementById("btn-audio").addEventListener("click", toggleAudio);
+  document.getElementById("relax-toggle").addEventListener("click", toggleAudio);
+
+  /* ========== PAN & ZOOM ========== */
+
+  const sceneT = document.getElementById("scene-transform");
+  const stageEl = document.getElementById("stage");
+  let scale = 1, panX = 0, panY = 0, dragging = false, lastX = 0, lastY = 0;
+
+  function applyTransform(withTransition) {
+    sceneT.classList.toggle("panning", !withTransition);
+    sceneT.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+  }
+
+  stageEl.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.065 : 0.065;
+    scale = Math.min(1.9, Math.max(0.65, scale + delta));
+    applyTransform(false);
+  }, { passive: false });
+
+  stageEl.addEventListener("pointerdown", (e) => {
+    dragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+    stageEl.classList.add("dragging");
+  });
+
+  window.addEventListener("pointermove", (e) => {
+    if (!dragging) return;
+    panX += (e.clientX - lastX);
+    panY += (e.clientY - lastY);
+    lastX = e.clientX;
+    lastY = e.clientY;
+    applyTransform(false);
+  });
+
+  window.addEventListener("pointerup", () => {
+    dragging = false;
+    stageEl.classList.remove("dragging");
+  });
+
+  document.getElementById("btn-reset").addEventListener("click", () => {
+    scale = 1;
+    panX = 0;
+    panY = 0;
+    applyTransform(true);
+  });
+})();
+</script>
+</body>
+</html>

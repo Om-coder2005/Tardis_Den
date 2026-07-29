@@ -1,0 +1,162 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand: #3b82f6;
+  --color-bg-room: var(--color-bg-room-val);
+  --color-bg-panel: var(--color-bg-panel-val);
+  --color-bg-titlebar: var(--color-bg-titlebar-val);
+  --color-text-main: var(--color-text-main-val);
+  --color-text-title: var(--color-text-title-val);
+  --color-border: var(--color-border-val);
+  --color-accent: var(--color-accent-val);
+  --color-accent-hover: var(--color-accent-hover-val);
+  --font-sans: "Space Mono", monospace;
+  
+  /* Library Redesign Colors */
+  --color-library-cream: #F9F7F1;
+  --color-library-navy: #1A2436;
+  --color-library-walnut: #4A3B32;
+  --color-library-brass: #C5A059;
+  --color-library-paper: #FFFFFF;
+  --color-library-slate: #64748B;
+  
+  /* Library Typography */
+  --font-library-serif: "Playfair Display", "Georgia", serif;
+  --font-library-sans: "Inter", "Helvetica Neue", sans-serif;
+  --font-library-mono: "Space Mono", monospace;
+  
+  /* Telescope Redesign Colors */
+  --color-tele-blue: #0A1128;
+  --color-tele-black: #02040A;
+  --color-tele-white: #F4F4F9;
+  --color-tele-purple: #3A0CA3;
+  --color-tele-cyan: #4CC9F0;
+  --color-tele-brass: #C5A059;
+  
+  /* Telescope Typography */
+  --font-tele-serif: "Playfair Display", "Georgia", serif;
+  --font-tele-sans: "Inter", "Helvetica Neue", sans-serif;
+  --font-tele-mono: "Space Mono", monospace;
+  
+  /* Journal Redesign Colors */
+  --color-journal-bg-primary: #190019;
+  --color-journal-bg-secondary: #2B124C;
+  --color-journal-card: #522B5B;
+  --color-journal-accent: #854F6C;
+  --color-journal-highlight: #DFB6B2;
+  --color-journal-paper: #FBE4D8;
+  
+  /* Journal Typography */
+  --font-journal-display: "Playfair Display", "Georgia", serif;
+  --font-journal-heading: "Playfair Display", "Georgia", serif;
+  --font-journal-body: "Inter", "Helvetica Neue", sans-serif;
+  --font-journal-mono: "IBM Plex Mono", monospace;
+  --font-journal-handwriting: "Caveat", cursive;
+}
+
+/* Base Theme (Day) */
+:root {
+  --color-bg-room-val: #EADDCD;
+  --color-bg-panel-val: #FDF9F1;
+  --color-bg-titlebar-val: #5C4033; /* Walnut wood */
+  --color-text-main-val: #27231E;
+  --color-text-title-val: #FDF9F1;
+  --color-border-val: #B5A642; /* Brass */
+  --color-accent-val: #6CA0DC; /* Soft blue */
+  --color-accent-hover-val: #5A8ECA;
+  --color-shadow-val: rgba(92, 64, 51, 0.15);
+}
+
+/* Night Theme */
+html.theme-night {
+  --color-bg-room-val: #0A0F1D;
+  --color-bg-panel-val: #162032; /* Deep navy */
+  --color-bg-titlebar-val: #0F1524;
+  --color-text-main-val: #F4EAD5; /* Cream */
+  --color-text-title-val: #E2E8F0;
+  --color-border-val: #334155;
+  --color-accent-val: #E2E8F0; /* Moonlit */
+  --color-accent-hover-val: #F8FAFC;
+  --color-shadow-val: rgba(0, 0, 0, 0.4);
+}
+
+@layer utilities {
+  .retro-border {
+    border: 1px solid var(--color-border-val);
+  }
+  .retro-shadow {
+    box-shadow: 0 4px 6px -1px var(--color-shadow-val), 0 2px 4px -1px var(--color-shadow-val);
+  }
+  .retro-shadow-hover {
+    transition: all 0.2s ease-in-out;
+  }
+  .retro-shadow-hover:hover {
+    box-shadow: 0 10px 15px -3px var(--color-shadow-val), 0 4px 6px -2px var(--color-shadow-val);
+    transform: translateY(-2px);
+  }
+  .retro-panel {
+    background-color: var(--color-bg-panel-val);
+    border: 1px solid var(--color-border-val);
+    box-shadow: 0 4px 6px -1px var(--color-shadow-val);
+    color: var(--color-text-main-val);
+  }
+  .retro-titlebar {
+    background-color: var(--color-bg-titlebar-val);
+    border-bottom: 1px solid var(--color-border-val);
+    padding: 0.25rem 0.75rem;
+    display: flex;
+    align-items: center;
+    font-weight: 700;
+    color: var(--color-text-title-val);
+  }
+  .btn-primary {
+    background-color: var(--color-bg-titlebar-val);
+    color: var(--color-text-title-val);
+    border: 1px solid var(--color-border-val);
+    padding: 0.5rem 1rem;
+    transition: all 0.2s;
+  }
+  .btn-primary:hover {
+    background-color: var(--color-accent-val);
+    color: var(--color-bg-panel-val);
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Space Mono", monospace;
+  background-color: var(--color-bg-room-val);
+  color: var(--color-text-main-val);
+  transition: background-color 0.5s ease, color 0.5s ease;
+}
+
+/* Markdown Editor Overrides for Journal */
+.journal-editor-container .w-md-editor-text-pre > code,
+.journal-editor-container .w-md-editor-text-input {
+  font-family: var(--font-journal-body) !important;
+  font-size: 1.125rem !important;
+  line-height: 1.8 !important;
+  color: #190019 !important;
+}
+
+.journal-editor-container .w-md-editor-text-pre .bold {
+  font-weight: 700 !important;
+}
+
+.journal-editor-container .w-md-editor-text-pre .italic {
+  font-style: italic !important;
+}
+
+/* Scrollbar override for Journal */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #DFB6B2;
+  border-radius: 4px;
+}
