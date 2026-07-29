@@ -74,6 +74,9 @@ const path = require('node:path');
 const rootDir = path.resolve(__dirname, '..');
 const schemaPath = path.resolve(__dirname, '../backend/prisma/schema.prisma');
 
+// Ensure all packages including devDependencies (vite, typescript) are installed
+execFileSync(npmRunner, ['install', '--include=dev'], { cwd: rootDir, stdio: 'inherit', env: process.env, shell: true });
+
 run(['prisma', 'generate', '--schema', schemaPath]);
 
 // Build frontend and backend
