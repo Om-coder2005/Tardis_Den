@@ -4,6 +4,7 @@ import { useRoomStore } from '../../store';
 import { useDesktopStore } from './store/useDesktopStore';
 import { BootSequence } from './components/BootSequence';
 import { DesktopEnvironment } from './components/DesktopEnvironment';
+import { AIToggleButton } from '../ai/AIToggleButton';
 
 export const ComputerModule: React.FC = () => {
   const { focusedObjectId, setFocusedObjectId } = useRoomStore();
@@ -21,6 +22,8 @@ export const ComputerModule: React.FC = () => {
       transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="absolute inset-4 md:inset-8 z-40 bg-[#190019] rounded-[24px] overflow-hidden shadow-[0_24px_80px_rgba(0,0,0,0.65)] border-2 border-[#854f6c] flex flex-col font-['Space_Mono',monospace]"
     >
+      <AIToggleButton context={{ module: 'Desktop', data: null }} />
+
       {/* Power Button (Exit) - Retro styled, no glassmorphism */}
       <button
         onClick={() => setFocusedObjectId(null)}

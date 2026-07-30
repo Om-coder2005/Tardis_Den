@@ -6,6 +6,7 @@ import { Photobooth } from './components/Photobooth';
 import { GallerySidebar } from './components/GallerySidebar';
 import { GalleryGrid } from './components/GalleryGrid';
 import { X } from 'lucide-react';
+import { AIToggleButton } from '../ai/AIToggleButton';
 
 export const CameraModule: React.FC = () => {
   const { focusedObjectId, clearFocus } = useRoomStore();
@@ -23,6 +24,8 @@ export const CameraModule: React.FC = () => {
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
           className="absolute inset-2 md:inset-4 lg:inset-8 z-50 bg-slate-950 rounded-[2rem] shadow-2xl overflow-hidden border border-slate-700/50 flex flex-col"
         >
+          <AIToggleButton context={{ module: 'Gallery', data: null }} />
+
           {/* Module Header */}
           <div className="absolute top-4 right-4 z-50">
             <button

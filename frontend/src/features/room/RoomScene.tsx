@@ -14,6 +14,7 @@ const PinnedNotesLayer = React.lazy(() => import('../journal/components/PinnedNo
 const RestAreaModule = React.lazy(() => import('../rest/components/RestAreaModule').then(m => ({ default: m.RestAreaModule })));
 import { EnvironmentLayer } from './components/EnvironmentLayer';
 import { ParticleSystem } from './components/ParticleSystem';
+import { AIToggleButton } from '../ai/AIToggleButton';
 // @ts-ignore
 import roomPngBackground from '../../assets/images/room.png';
 
@@ -86,6 +87,7 @@ export const RoomScene: React.FC = () => {
       </motion.div>
 
       <InteractionPanel />
+      {!focusedObjectId && <AIToggleButton context={{ module: 'Room', data: null }} />}
       {/* Interactive Modules with Suspense for Lazy Loading */}
       <React.Suspense fallback={null}>
         <BookshelfModule />
