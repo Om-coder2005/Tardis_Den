@@ -164,8 +164,11 @@ export const useJournalEntries = (filters: { folderId?: string | null, search?: 
         if (filters.type) params.append('type', filters.type);
         
         const { data } = await api.get<JournalEntry[]>(`/api/journal/entries?${params.toString()}`);
-        saveLocalEntries(data);
-        return data;
+        if (data && data.length > 0) {
+          saveLocalEntries(data);
+          return data;
+        }
+        return getLocalEntries();
       } catch (err) {
         console.warn('Backend unavailable, using local entries fallback.');
         let list = getLocalEntries();
