@@ -1,25 +1,39 @@
 import { v2 as cloudinary } from 'cloudinary';
 
+const isCloudinaryUrlValid = (url?: string): boolean => {
+  return Boolean(url && url.startsWith('cloudinary://') && url.includes('@'));
+};
+
 const isCloudinaryConfigured = (): boolean => {
+  if (process.env.CLOUDINARY_URL) {
+    return isCloudinaryUrlValid(process.env.CLOUDINARY_URL);
+  }
   return Boolean(
-    process.env.CLOUDINARY_URL ||
-    (process.env.CLOUDINARY_CLOUD_NAME &&
-     process.env.CLOUDINARY_API_KEY &&
-     process.env.CLOUDINARY_API_SECRET)
+    process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET
   );
 };
 
 if (isCloudinaryConfigured()) {
-  if (process.env.CLOUDINARY_URL) {
-    cloudinary.config({
-      cloudinary_url: process.env.CLOUDINARY_URL,
-    });
-  } else {
-    cloudinary.config({
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      api_secret: process.env.CLOUDINARY_API_SECRET,
-    });
+  try {
+    if (process.env.CLOUDINARY_URL && isCloudinaryUrlValid(process.env.CLOUDINARY_URL)) {
+      cloudinary.config({
+        cloudinary_url: process.env.CLOUDINARY_URL,
+      });
+    } else if (
+      process.env.CLOUDINARY_CLOUD_NAME &&
+      process.env.CLOUDINARY_API_KEY &&
+      process.env.CLOUDINARY_API_SECRET
+    ) {
+      cloudinary.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+      });
+    }
+  } catch (err) {
+    console.error('Failed to initialize Cloudinary SDK:', err);
   }
 }
 
