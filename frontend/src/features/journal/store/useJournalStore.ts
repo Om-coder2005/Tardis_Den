@@ -21,5 +21,5 @@ export const useJournalStore = create<JournalState>((set) => ({
   setSearchQuery: (query) => set({ searchQuery: query }),
   setSelectedFolderId: (id) => set({ selectedFolderId: id, selectedEntryId: null }),
   setSelectedEntryId: (id) => set({ selectedEntryId: id }),
-  setShowFavoritesOnly: (show) => set({ showFavoritesOnly: show }),
+  setShowFavoritesOnly: (show) => set({ showFavoritesOnly: show, selectedEntryId: null }),
 }));
