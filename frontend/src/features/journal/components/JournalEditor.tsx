@@ -2,7 +2,9 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import { useJournalStore } from '../store/useJournalStore';
 import { useJournalEntry, useUpdateJournalEntry, uploadMedia } from '../services/journal.service';
-import { Clock, Star } from 'lucide-react';
+import { Clock, Star, Tag, Smile, Plus, X as XIcon } from 'lucide-react';
+
+const MOODS = ['🌌 Curious', '✨ Inspired', '☕ Calm', '💭 Thoughtful', '🌙 Quiet', '🚀 Focused'];
 
 export const JournalEditor: React.FC = () => {
   const { selectedEntryId, setSelectedEntryId } = useJournalStore();
@@ -12,6 +14,8 @@ export const JournalEditor: React.FC = () => {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<string | undefined>('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isAddingTag, setIsAddingTag] = useState(false);
+  const [newTagText, setNewTagText] = useState('');
 
   useEffect(() => {
     if (entry) {
@@ -45,6 +49,33 @@ export const JournalEditor: React.FC = () => {
   const handleContentChange = (val?: string) => {
     setContent(val);
     if (selectedEntryId) debouncedSave(selectedEntryId, { content: val || '' });
+  };
+
+  const handleMoodSelect = (mood: string) => {
+    if (selectedEntryId) {
+      updateEntry({ id: selectedEntryId, data: { mood } });
+    }
+  };
+
+  const handleAddTag = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanTag = newTagText.trim().replace(/^#/, '');
+    if (cleanTag && selectedEntryId && entry) {
+      const currentTags = entry.tags || [];
+      if (!currentTags.includes(cleanTag)) {
+        const updatedTags = [...currentTags, cleanTag];
+        updateEntry({ id: selectedEntryId, data: { tags: updatedTags } });
+      }
+      setNewTagText('');
+      setIsAddingTag(false);
+    }
+  };
+
+  const handleRemoveTag = (tagToRemove: string) => {
+    if (selectedEntryId && entry) {
+      const updatedTags = (entry.tags || []).filter(t => t !== tagToRemove);
+      updateEntry({ id: selectedEntryId, data: { tags: updatedTags } });
+    }
   };
 
   const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
@@ -111,7 +142,6 @@ export const JournalEditor: React.FC = () => {
             className="w-full text-5xl font-[var(--font-journal-display)] font-bold bg-transparent text-[#190019] placeholder-[#190019]/20 outline-none mb-10 border-b-2 border-[#DFB6B2]/30 pb-4"
           />
           
-          {/* We force light mode on MDEditor here to simulate paper, overriding styles in index.css */}
           <div data-color-mode="light" className="w-full journal-editor-container">
             <MDEditor
               value={content}
@@ -127,50 +157,115 @@ export const JournalEditor: React.FC = () => {
       </div>
 
       {/* Context Panel (Right Side) */}
-      <div className="w-80 border-l-2 border-[#DFB6B2]/30 bg-[#FBE4D8]/50 backdrop-blur-sm shrink-0 flex flex-col h-full relative z-10">
+      <div className="w-80 border-l-2 border-[#DFB6B2]/30 bg-[#FBE4D8]/50 backdrop-blur-sm shrink-0 flex flex-col h-full relative z-10 overflow-y-auto custom-scrollbar">
         
-        <div className="p-8 pb-6 border-b-2 border-[#DFB6B2]/30">
-          <h3 className="text-xs font-bold text-[#854F6C] uppercase tracking-[0.2em] font-[var(--font-journal-mono)] mb-6">Metadata</h3>
+        <div className="p-6 pb-6 border-b-2 border-[#DFB6B2]/30">
+          <h3 className="text-xs font-bold text-[#854F6C] uppercase tracking-[0.2em] font-[var(--font-journal-mono)] mb-4">Metadata</h3>
           
-          <div className="space-y-4">
+          <div className="space-y-3">
             <div>
-              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-1">Date Logged</p>
-              <p className="font-[var(--font-journal-mono)] text-sm text-[#190019]">{new Date(entry.createdAt).toLocaleDateString()}</p>
+              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-0.5">Date Logged</p>
+              <p className="font-[var(--font-journal-mono)] text-xs text-[#190019]">{new Date(entry.createdAt).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-1">Last Modified</p>
-              <p className="font-[var(--font-journal-mono)] text-sm text-[#190019]">{new Date(entry.updatedAt).toLocaleDateString()}</p>
+              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-0.5">Last Modified</p>
+              <p className="font-[var(--font-journal-mono)] text-xs text-[#190019]">{new Date(entry.updatedAt).toLocaleDateString()}</p>
             </div>
             <div>
-              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-1">Word Count</p>
-              <p className="font-[var(--font-journal-mono)] text-sm text-[#190019]">{content?.split(/\s+/).filter(w => w.length > 0).length || 0} words</p>
+              <p className="text-[10px] text-[#522B5B]/60 uppercase tracking-widest mb-0.5">Word Count</p>
+              <p className="font-[var(--font-journal-mono)] text-xs text-[#190019]">{content?.split(/\s+/).filter(w => w.length > 0).length || 0} words</p>
             </div>
           </div>
         </div>
 
-        <div className="p-8 pt-6 flex-1 overflow-y-auto">
+        <div className="p-6 space-y-6">
           <button 
             onClick={() => updateEntry({ id: selectedEntryId, data: { isFavorite: !entry.isFavorite } })}
-            className={`w-full py-3 px-4 rounded-xl flex items-center justify-center gap-3 transition-all duration-300 ${
+            className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 ${
               entry.isFavorite 
-                ? 'bg-[#190019] text-[#DFB6B2] shadow-lg shadow-[#190019]/20' 
-                : 'bg-[#DFB6B2]/30 text-[#854F6C] hover:bg-[#DFB6B2]/50'
+                ? 'bg-[#190019] text-[#DFB6B2] shadow-lg shadow-[#190019]/20 font-bold' 
+                : 'bg-[#DFB6B2]/30 text-[#854F6C] hover:bg-[#DFB6B2]/50 font-medium'
             }`}
           >
             <Star className={`w-4 h-4 ${entry.isFavorite ? 'fill-current' : ''}`} />
-            <span className="font-bold text-sm">
+            <span className="text-xs">
               {entry.isFavorite ? 'Starred Memory' : 'Star Memory'}
             </span>
           </button>
 
-          <div className="mt-8">
-            <h3 className="text-xs font-bold text-[#854F6C] uppercase tracking-[0.2em] font-[var(--font-journal-mono)] mb-4">Observation Tags</h3>
-            <div className="flex flex-wrap gap-2">
-              <span className="px-3 py-1.5 bg-[#DFB6B2]/30 rounded-lg text-xs text-[#522B5B] font-[var(--font-journal-mono)]">#field-notes</span>
-              <span className="px-3 py-1.5 bg-[#DFB6B2]/30 rounded-lg text-xs text-[#522B5B] font-[var(--font-journal-mono)]">#telescope</span>
-              <button className="px-3 py-1.5 border border-dashed border-[#854F6C]/40 rounded-lg text-xs text-[#854F6C] hover:bg-[#DFB6B2]/30 transition-colors">
-                + Add Tag
+          {/* Mood Picker */}
+          <div>
+            <div className="flex items-center gap-1.5 text-xs font-bold text-[#854F6C] uppercase tracking-[0.2em] font-[var(--font-journal-mono)] mb-3">
+              <Smile className="w-3.5 h-3.5" />
+              <span>Observation Mood</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {MOODS.map(m => (
+                <button
+                  key={m}
+                  onClick={() => handleMoodSelect(m)}
+                  className={`py-2 px-2.5 rounded-lg text-xs transition-all text-left font-medium ${
+                    entry.mood === m
+                      ? 'bg-[#190019] text-[#DFB6B2] shadow-sm font-bold border border-[#854F6C]'
+                      : 'bg-[#DFB6B2]/20 text-[#522B5B] hover:bg-[#DFB6B2]/40'
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Dynamic Hashtag Manager */}
+          <div>
+            <div className="flex items-center justify-between text-xs font-bold text-[#854F6C] uppercase tracking-[0.2em] font-[var(--font-journal-mono)] mb-3">
+              <div className="flex items-center gap-1.5">
+                <Tag className="w-3.5 h-3.5" />
+                <span>Hashtags</span>
+              </div>
+              <button 
+                onClick={() => setIsAddingTag(true)} 
+                className="text-[#854F6C] hover:text-[#190019] transition-colors p-1"
+                title="Add tag"
+              >
+                <Plus className="w-4 h-4" />
               </button>
+            </div>
+
+            {isAddingTag && (
+              <form onSubmit={handleAddTag} className="mb-3">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="tag-name + Enter"
+                  value={newTagText}
+                  onChange={e => setNewTagText(e.target.value)}
+                  onBlur={() => setIsAddingTag(false)}
+                  className="w-full bg-white border border-[#DFB6B2] rounded-lg px-2.5 py-1.5 text-xs text-[#190019] outline-none shadow-inner"
+                />
+              </form>
+            )}
+
+            <div className="flex flex-wrap gap-2">
+              {(entry.tags && entry.tags.length > 0) ? (
+                entry.tags.map(tag => (
+                  <span 
+                    key={tag} 
+                    className="px-2.5 py-1 bg-[#DFB6B2]/30 rounded-lg text-xs text-[#522B5B] font-[var(--font-journal-mono)] flex items-center gap-1.5 border border-[#DFB6B2]/40"
+                  >
+                    <span>#{tag}</span>
+                    <button 
+                      onClick={() => handleRemoveTag(tag)}
+                      className="hover:text-red-700 transition-colors"
+                      title="Remove tag"
+                    >
+                      <XIcon className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))
+              ) : (
+                <p className="text-xs text-[#522B5B]/50 italic">No hashtags added yet.</p>
+              )}
             </div>
           </div>
         </div>

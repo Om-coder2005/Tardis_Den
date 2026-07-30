@@ -23,8 +23,8 @@ The **Captain's Journal** (Zone C: Memory Area - Desk Journal) acts as the centr
 ### ✅ Working Features
 1. **Journal Unfolding Animation**: Clicking the desk journal opens the logbook interface smoothly.
 2. **Full CRUD Entry Workflow**: Creating, editing, updating, and deleting journal entries.
-3. **Local Storage / Database Persistence**: Journal logs are persisted across user sessions in application storage.
-4. **Search & Tag Filtering**: Filtering entries by title keywords, tags, or mood selections.
+3. **Local Storage / Database Persistence & Offline Fallback**: Journal logs are persisted via API with automated transparent `localStorage` fallback if the server is offline.
+4. **Search, Dynamic Hashtags & Mood Selector**: Filter entries by search terms, assign observation moods (Curious, Inspired, Calm, etc.), and dynamically add/delete entry hashtags.
 5. **Pinned Notes Overlay**: Rendering pinned sticky notes with color customization and position offsets.
 
 ### ❌ Non-Working / Planned Features

@@ -15,6 +15,7 @@ export interface JournalEntry {
   isFavorite: boolean;
   folderId: string | null;
   tags: string[];
+  mood?: string | null;
   type?: string;
   linkedModule?: string | null;
   linkedEntityId?: string | null;
@@ -32,13 +33,49 @@ export interface JournalVersion {
   createdAt: string;
 }
 
+// LocalStorage Fallback Helpers
+const LOCAL_ENTRIES_KEY = 'tardis_journal_entries_fallback';
+const LOCAL_FOLDERS_KEY = 'tardis_journal_folders_fallback';
+
+const getLocalEntries = (): JournalEntry[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_ENTRIES_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalEntries = (entries: JournalEntry[]) => {
+  localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(entries));
+};
+
+const getLocalFolders = (): JournalFolder[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_FOLDERS_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocalFolders = (folders: JournalFolder[]) => {
+  localStorage.setItem(LOCAL_FOLDERS_KEY, JSON.stringify(folders));
+};
+
 // --- Folders ---
 export const useJournalFolders = () => {
   return useQuery({
     queryKey: ['journalFolders'],
     queryFn: async () => {
-      const { data } = await api.get<JournalFolder[]>('/api/journal/folders');
-      return data;
+      try {
+        const { data } = await api.get<JournalFolder[]>('/api/journal/folders');
+        saveLocalFolders(data);
+        return data;
+      } catch (err) {
+        console.warn('Backend unavailable, using local folders fallback.');
+        return getLocalFolders();
+      }
     },
   });
 };
@@ -47,8 +84,21 @@ export const useCreateJournalFolder = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (name: string) => {
-      const { data } = await api.post<JournalFolder>('/api/journal/folders', { name });
-      return data;
+      try {
+        const { data } = await api.post<JournalFolder>('/api/journal/folders', { name });
+        return data;
+      } catch (err) {
+        console.warn('Backend unavailable, creating folder locally.');
+        const newFolder: JournalFolder = {
+          id: `folder_${Date.now()}`,
+          name,
+          _count: { entries: 0 }
+        };
+        const current = getLocalFolders();
+        const updated = [...current, newFolder];
+        saveLocalFolders(updated);
+        return newFolder;
+      }
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['journalFolders'] }),
   });
@@ -59,14 +109,35 @@ export const useJournalEntries = (filters: { folderId?: string | null, search?: 
   return useQuery({
     queryKey: ['journalEntries', filters],
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (filters.folderId) params.append('folderId', filters.folderId);
-      if (filters.search) params.append('search', filters.search);
-      if (filters.isFavorite) params.append('isFavorite', 'true');
-      if (filters.type) params.append('type', filters.type);
-      
-      const { data } = await api.get<JournalEntry[]>(`/api/journal/entries?${params.toString()}`);
-      return data;
+      try {
+        const params = new URLSearchParams();
+        if (filters.folderId) params.append('folderId', filters.folderId);
+        if (filters.search) params.append('search', filters.search);
+        if (filters.isFavorite) params.append('isFavorite', 'true');
+        if (filters.type) params.append('type', filters.type);
+        
+        const { data } = await api.get<JournalEntry[]>(`/api/journal/entries?${params.toString()}`);
+        saveLocalEntries(data);
+        return data;
+      } catch (err) {
+        console.warn('Backend unavailable, using local entries fallback.');
+        let list = getLocalEntries();
+
+        if (filters.type) {
+          list = list.filter(e => e.type === filters.type || (filters.type === 'journal' && (!e.type || e.type === 'journal')));
+        }
+        if (filters.folderId) {
+          list = list.filter(e => e.folderId === filters.folderId);
+        }
+        if (filters.isFavorite) {
+          list = list.filter(e => e.isFavorite);
+        }
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          list = list.filter(e => e.title?.toLowerCase().includes(q) || e.content?.toLowerCase().includes(q));
+        }
+        return list;
+      }
     },
   });
 };
@@ -76,8 +147,14 @@ export const useJournalEntry = (id: string | null) => {
     queryKey: ['journalEntry', id],
     queryFn: async () => {
       if (!id) return null;
-      const { data } = await api.get<JournalEntry>(`/api/journal/entries/${id}`);
-      return data;
+      try {
+        const { data } = await api.get<JournalEntry>(`/api/journal/entries/${id}`);
+        return data;
+      } catch (err) {
+        console.warn('Backend unavailable, getting local entry.');
+        const list = getLocalEntries();
+        return list.find(e => e.id === id) || null;
+      }
     },
     enabled: !!id,
   });
@@ -87,8 +164,28 @@ export const useCreateJournalEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (entry: Partial<JournalEntry>) => {
-      const { data } = await api.post<JournalEntry>('/api/journal/entries', entry);
-      return data;
+      try {
+        const { data } = await api.post<JournalEntry>('/api/journal/entries', entry);
+        return data;
+      } catch (err) {
+        console.warn('Backend unavailable, creating entry locally.');
+        const newEntry: JournalEntry = {
+          id: `entry_${Date.now()}`,
+          title: entry.title || 'Untitled Observation',
+          content: entry.content || '',
+          isDraft: false,
+          isFavorite: false,
+          folderId: entry.folderId || null,
+          tags: entry.tags || [],
+          mood: entry.mood || '🌌 Curious',
+          type: entry.type || 'journal',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        const current = getLocalEntries();
+        saveLocalEntries([newEntry, ...current]);
+        return newEntry;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
@@ -101,8 +198,24 @@ export const useUpdateJournalEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<JournalEntry> }) => {
-      const { data: result } = await api.put<JournalEntry>(`/api/journal/entries/${id}`, data);
-      return result;
+      try {
+        const { data: result } = await api.put<JournalEntry>(`/api/journal/entries/${id}`, data);
+        return result;
+      } catch (err) {
+        console.warn('Backend unavailable, updating entry locally.');
+        const list = getLocalEntries();
+        const index = list.findIndex(e => e.id === id);
+        if (index !== -1) {
+          list[index] = {
+            ...list[index],
+            ...data,
+            updatedAt: new Date().toISOString()
+          };
+          saveLocalEntries(list);
+          return list[index];
+        }
+        throw new Error('Entry not found');
+      }
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
@@ -115,7 +228,13 @@ export const useDeleteJournalEntry = () => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      await api.delete(`/api/journal/entries/${id}`);
+      try {
+        await api.delete(`/api/journal/entries/${id}`);
+      } catch (err) {
+        console.warn('Backend unavailable, deleting entry locally.');
+        const list = getLocalEntries().filter(e => e.id !== id);
+        saveLocalEntries(list);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['journalEntries'] });
@@ -125,10 +244,19 @@ export const useDeleteJournalEntry = () => {
 };
 
 export const uploadMedia = async (file: File): Promise<string> => {
-  const formData = new FormData();
-  formData.append('file', file);
-  const { data } = await api.post<{ url: string }>('/api/journal/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-  return data.url;
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const { data } = await api.post<{ url: string }>('/api/journal/upload', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return data.url;
+  } catch (err) {
+    console.warn('Backend unavailable, converting image to local Data URL.');
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target?.result as string || '');
+      reader.readAsDataURL(file);
+    });
+  }
 };
