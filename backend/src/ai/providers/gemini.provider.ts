@@ -24,7 +24,7 @@ export class GeminiProvider implements IAIProvider {
 
     contents.push({ role: 'user', parts: [{ text: payload.prompt }] });
 
-    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
 
     const responseStream = await ai.models.generateContentStream({
       model: modelName,
