@@ -24,16 +24,17 @@ export const JournalDashboard: React.FC = () => {
     e.preventDefault();
     if (quickNoteTitle.trim() || quickNoteContent.trim()) {
       createEntry({
-        title: quickNoteTitle.trim() ? `Quick Note: ${quickNoteTitle.trim()}` : 'Quick Note',
+        title: quickNoteTitle.trim() || 'Sticky Note',
         content: quickNoteContent.trim() || '',
-        type: 'journal',
-        folderId: selectedFolderId
+        type: 'pinned',
+        x: Math.min(window.innerWidth - 300, Math.max(40, Math.random() * (window.innerWidth - 360))),
+        y: Math.min(window.innerHeight - 300, Math.max(80, Math.random() * (window.innerHeight - 360))),
+        color: '#FBE4D8'
       }, {
-        onSuccess: (data) => {
+        onSuccess: () => {
           setQuickNoteTitle('');
           setQuickNoteContent('');
           setShowQuickNoteModal(false);
-          setSelectedEntryId(data.id);
         }
       });
     }
