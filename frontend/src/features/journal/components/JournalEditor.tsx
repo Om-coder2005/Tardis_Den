@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import MDEditor from '@uiw/react-md-editor';
 import { useJournalStore } from '../store/useJournalStore';
-import { useJournalEntry, useUpdateJournalEntry, uploadMedia } from '../services/journal.service';
-import { Clock, Star, Tag, Smile, Plus, X as XIcon } from 'lucide-react';
+import { useJournalEntry, useUpdateJournalEntry, useDeleteJournalEntry, uploadMedia } from '../services/journal.service';
+import { Clock, Star, Tag, Smile, Plus, X as XIcon, Trash2 } from 'lucide-react';
 
 const MOODS = ['🌌 Curious', '✨ Inspired', '☕ Calm', '💭 Thoughtful', '🌙 Quiet', '🚀 Focused'];
 
@@ -10,6 +10,7 @@ export const JournalEditor: React.FC = () => {
   const { selectedEntryId, setSelectedEntryId } = useJournalStore();
   const { data: entry } = useJournalEntry(selectedEntryId);
   const { mutate: updateEntry } = useUpdateJournalEntry();
+  const { mutate: deleteEntry } = useDeleteJournalEntry();
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<string | undefined>('');
@@ -179,19 +180,36 @@ export const JournalEditor: React.FC = () => {
         </div>
 
         <div className="p-6 space-y-6">
-          <button 
-            onClick={() => updateEntry({ id: selectedEntryId, data: { isFavorite: !entry.isFavorite } })}
-            className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 ${
-              entry.isFavorite 
-                ? 'bg-[#190019] text-[#DFB6B2] shadow-lg shadow-[#190019]/20 font-bold' 
-                : 'bg-[#DFB6B2]/30 text-[#854F6C] hover:bg-[#DFB6B2]/50 font-medium'
-            }`}
-          >
-            <Star className={`w-4 h-4 ${entry.isFavorite ? 'fill-current' : ''}`} />
-            <span className="text-xs">
-              {entry.isFavorite ? 'Starred Memory' : 'Star Memory'}
-            </span>
-          </button>
+          <div className="space-y-2">
+            <button 
+              onClick={() => updateEntry({ id: selectedEntryId, data: { isFavorite: !entry.isFavorite } })}
+              className={`w-full py-2.5 px-4 rounded-xl flex items-center justify-center gap-2.5 transition-all duration-300 ${
+                entry.isFavorite 
+                  ? 'bg-[#190019] text-[#DFB6B2] shadow-lg shadow-[#190019]/20 font-bold' 
+                  : 'bg-[#DFB6B2]/30 text-[#854F6C] hover:bg-[#DFB6B2]/50 font-medium'
+              }`}
+            >
+              <Star className={`w-4 h-4 ${entry.isFavorite ? 'fill-current' : ''}`} />
+              <span className="text-xs">
+                {entry.isFavorite ? 'Starred Memory' : 'Star Memory'}
+              </span>
+            </button>
+
+            <button 
+              onClick={() => {
+                if (window.confirm('Tear out and delete this diary entry?')) {
+                  deleteEntry(selectedEntryId, {
+                    onSuccess: () => setSelectedEntryId(null)
+                  });
+                }
+              }}
+              className="w-full py-2 px-4 rounded-xl flex items-center justify-center gap-2 text-red-800 hover:text-red-950 bg-red-100/50 hover:bg-red-200/70 border border-red-300/40 text-xs font-bold transition-all"
+              title="Delete this observation entry"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Tear Out Page (Delete)</span>
+            </button>
+          </div>
 
           {/* Mood Picker */}
           <div>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useJournalStore } from '../store/useJournalStore';
-import { useJournalEntries, useCreateJournalEntry, useUpdateJournalEntry } from '../services/journal.service';
-import { Star, Calendar, ArrowRight, PenTool } from 'lucide-react';
+import { useJournalEntries, useCreateJournalEntry, useUpdateJournalEntry, useDeleteJournalEntry } from '../services/journal.service';
+import { Star, Calendar, ArrowRight, PenTool, Trash2 } from 'lucide-react';
 
 export const JournalDashboard: React.FC = () => {
   const { searchQuery, selectedFolderId, showFavoritesOnly, setSelectedEntryId } = useJournalStore();
@@ -9,6 +9,7 @@ export const JournalDashboard: React.FC = () => {
   const { data: pinnedNotes = [] } = useJournalEntries({ search: searchQuery, type: 'pinned' });
   const { mutate: createEntry } = useCreateJournalEntry();
   const { mutate: updateEntry } = useUpdateJournalEntry();
+  const { mutate: deleteEntry } = useDeleteJournalEntry();
 
   const handleCreateEntry = () => {
     createEntry({ folderId: selectedFolderId, type: 'journal' }, {
@@ -103,7 +104,21 @@ export const JournalDashboard: React.FC = () => {
                   <Calendar className="w-3.5 h-3.5" />
                   <span>{new Date(entry.updatedAt).toLocaleDateString()}</span>
                 </div>
-                {entry.isFavorite && <Star className="w-4 h-4 text-[#DFB6B2] fill-current" />}
+                <div className="flex items-center gap-2">
+                  {entry.isFavorite && <Star className="w-4 h-4 text-[#DFB6B2] fill-current" />}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Delete this observation log entry?')) {
+                        deleteEntry(entry.id);
+                      }
+                    }}
+                    className="p-1 text-[#DFB6B2]/40 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all rounded"
+                    title="Delete Observation"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
 
               <h3 className="text-2xl font-[var(--font-journal-heading)] font-bold text-[#FBE4D8] mb-3 line-clamp-2 leading-tight relative z-10 group-hover:text-[#DFB6B2] transition-colors">
