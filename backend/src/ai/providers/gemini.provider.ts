@@ -24,12 +24,13 @@ export class GeminiProvider implements IAIProvider {
 
     contents.push({ role: 'user', parts: [{ text: payload.prompt }] });
 
-    // Prioritized list of free-tier compatible Gemini models
+    // Prioritized list of active Google AI Studio Free Tier models
     const candidateModels = [
       process.env.GEMINI_MODEL,
-      'gemini-1.5-flash',
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-pro',
+      'gemini-flash-latest',
+      'gemini-flash-lite-latest',
+      'gemini-2.0-flash-lite',
+      'gemini-2.0-flash',
     ].filter(Boolean) as string[];
 
     let responseStream = null;
@@ -47,7 +48,6 @@ export class GeminiProvider implements IAIProvider {
             }
           }
         });
-        // If stream creation succeeds without throwing 404/NOT_FOUND, break loop
         if (responseStream) break;
       } catch (err: any) {
         lastError = err;
