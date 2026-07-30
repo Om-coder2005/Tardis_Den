@@ -1,16 +1,7 @@
 import { create } from 'zustand';
+import type { AIContextData as AIContext, AIMessage } from './types/ai.types';
 
-export interface AIMessage {
-  id: string;
-  role: 'user' | 'model';
-  content: string;
-  isStreaming?: boolean;
-}
-
-export interface AIContext {
-  module: 'Bookshelf' | 'Telescope' | 'Journal' | 'Desktop';
-  data: any;
-}
+export type { AIMessage, AIContext };
 
 interface AIState {
   isOpen: boolean;
@@ -24,6 +15,9 @@ interface AIState {
   addMessage: (msg: Omit<AIMessage, 'id'>) => string;
   updateMessage: (id: string, content: string, isStreaming?: boolean) => void;
   clearHistory: () => void;
+  activeRequest: AbortController | null;
+  setRequestController: (controller: AbortController | null) => void;
+  abortRequest: () => void;
 }
 
 export const useAIStore = create<AIState>((set) => ({
@@ -32,12 +26,21 @@ export const useAIStore = create<AIState>((set) => ({
   isStreaming: false,
   context: null,
 
+  activeRequest: null,
+
   openPanel: (context) => set((state) => ({ 
     isOpen: true, 
     context: context || state.context 
   })),
   
-  closePanel: () => set({ isOpen: false }),
+  closePanel: () => {
+    set((state) => {
+      if (state.activeRequest) {
+        state.activeRequest.abort('Panel closed');
+      }
+      return { isOpen: false, activeRequest: null, isStreaming: false };
+    });
+  },
   
   setContext: (context) => set({ context }),
 
@@ -55,5 +58,14 @@ export const useAIStore = create<AIState>((set) => ({
     )
   })),
 
-  clearHistory: () => set({ messages: [] })
+  clearHistory: () => set({ messages: [] }),
+
+  setRequestController: (controller) => set({ activeRequest: controller }),
+
+  abortRequest: () => set((state) => {
+    if (state.activeRequest) {
+      state.activeRequest.abort('Request aborted');
+    }
+    return { activeRequest: null, isStreaming: false };
+  })
 }));
