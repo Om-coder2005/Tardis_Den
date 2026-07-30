@@ -37,47 +37,7 @@ export interface JournalVersion {
 const LOCAL_ENTRIES_KEY = 'tardis_journal_entries_fallback';
 const LOCAL_FOLDERS_KEY = 'tardis_journal_folders_fallback';
 
-const INITIAL_OBSERVATORY_ENTRIES: JournalEntry[] = [
-  {
-    id: 'entry_obs_001',
-    title: '🌌 Observation Log #001: Horsehead Nebula Spectrum',
-    content: `## Spectral Emission Analysis\nCaptured deep-field infrared imagery of the Barnard 33 cloud structure using the primary 400mm refractor.\n\n### Findings:\n- **Ionization Front**: Elevated H-alpha emissions along the eastern dust ridge.\n- **Star Formation**: Active protostellar cores detected within the dark molecular nebula.\n\n*Note: Adjust thermal cooling on the CCD camera before next transit.*`,
-    isDraft: false,
-    isFavorite: true,
-    folderId: null,
-    tags: ['astronomy', 'nebula', 'field-notes'],
-    mood: '🌌 Curious',
-    type: 'journal',
-    createdAt: new Date(Date.now() - 86400000 * 2).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString()
-  },
-  {
-    id: 'entry_obs_002',
-    title: '🔭 Observation Log #002: Refractor Alignment & Focus',
-    content: `Completed routine optical alignment on the main equatorial mount. Cleaned lens elements and synchronized clock drive tracking.\n\n- Atmospheric Seeing: 4/5 (Calm upper winds)\n- Target Object: Saturn's Ring Plane Inclination\n\n*Cassini Division clearly visible under 250x magnification.*`,
-    isDraft: false,
-    isFavorite: false,
-    folderId: null,
-    tags: ['telescope', 'maintenance', 'saturn'],
-    mood: '🚀 Focused',
-    type: 'journal',
-    createdAt: new Date(Date.now() - 86400000 * 4).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 4).toISOString()
-  },
-  {
-    id: 'entry_obs_003',
-    title: '☕ Personal Log: Quiet Evening in the Den',
-    content: `Rain streaks against the observatory window tonight. Brewing warm coffee while watching ambient ambient particle rain in the room.\n\nEverything in the TARDIS workspace feels calm and aligned. Looking forward to capturing new polaroid memories later.`,
-    isDraft: false,
-    isFavorite: true,
-    folderId: null,
-    tags: ['reflections', 'cozy', 'personal'],
-    mood: '☕ Calm',
-    type: 'journal',
-    createdAt: new Date(Date.now() - 86400000 * 6).toISOString(),
-    updatedAt: new Date(Date.now() - 86400000 * 6).toISOString()
-  }
-];
+const INITIAL_OBSERVATORY_ENTRIES: JournalEntry[] = [];
 
 const getLocalEntries = (): JournalEntry[] => {
   try {
@@ -87,11 +47,11 @@ const getLocalEntries = (): JournalEntry[] => {
       return INITIAL_OBSERVATORY_ENTRIES;
     }
     const parsed: JournalEntry[] = JSON.parse(raw);
-    const cleaned = parsed.filter(e => e.type !== 'pinned');
+    const cleaned = parsed.filter(e => e.type !== 'pinned' && !e.id.startsWith('entry_obs_'));
     if (cleaned.length !== parsed.length) {
       localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(cleaned));
     }
-    return cleaned.length > 0 ? cleaned : INITIAL_OBSERVATORY_ENTRIES;
+    return cleaned;
   } catch {
     return INITIAL_OBSERVATORY_ENTRIES;
   }

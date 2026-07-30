@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useJournalStore } from '../store/useJournalStore';
 import { useJournalEntries, useCreateJournalEntry, useDeleteJournalEntry } from '../services/journal.service';
-import { Star, Calendar, ArrowRight, PenTool, Trash2 } from 'lucide-react';
+import { Star, Calendar, ArrowRight, PenTool, Trash2, StickyNote, X } from 'lucide-react';
 
 export const JournalDashboard: React.FC = () => {
   const { searchQuery, selectedFolderId, showFavoritesOnly, setSelectedEntryId } = useJournalStore();
@@ -9,10 +10,33 @@ export const JournalDashboard: React.FC = () => {
   const { mutate: createEntry } = useCreateJournalEntry();
   const { mutate: deleteEntry } = useDeleteJournalEntry();
 
+  const [showQuickNoteModal, setShowQuickNoteModal] = useState(false);
+  const [quickNoteTitle, setQuickNoteTitle] = useState('');
+  const [quickNoteContent, setQuickNoteContent] = useState('');
+
   const handleCreateEntry = () => {
     createEntry({ folderId: selectedFolderId, type: 'journal' }, {
       onSuccess: (data) => setSelectedEntryId(data.id)
     });
+  };
+
+  const handleCreateQuickNote = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (quickNoteTitle.trim() || quickNoteContent.trim()) {
+      createEntry({
+        title: quickNoteTitle.trim() ? `Quick Note: ${quickNoteTitle.trim()}` : 'Quick Note',
+        content: quickNoteContent.trim() || '',
+        type: 'journal',
+        folderId: selectedFolderId
+      }, {
+        onSuccess: (data) => {
+          setQuickNoteTitle('');
+          setQuickNoteContent('');
+          setShowQuickNoteModal(false);
+          setSelectedEntryId(data.id);
+        }
+      });
+    }
   };
 
   return (
@@ -33,13 +57,24 @@ export const JournalDashboard: React.FC = () => {
             </p>
           </div>
           
-          <button 
-            onClick={handleCreateEntry}
-            className="flex items-center gap-3 bg-[#DFB6B2] hover:bg-[#FBE4D8] text-[#190019] px-6 py-3.5 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-1 text-sm"
-          >
-            <PenTool className="w-4 h-4" />
-            <span>New Observation</span>
-          </button>
+          <div className="flex items-center gap-3">
+            <button 
+              onClick={() => setShowQuickNoteModal(true)}
+              className="flex items-center gap-2 bg-[#DFB6B2] hover:bg-[#FBE4D8] text-[#190019] px-5 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm"
+              title="Add a fast Quick Note"
+            >
+              <StickyNote className="w-4 h-4" />
+              <span>Quick Note</span>
+            </button>
+            
+            <button 
+              onClick={handleCreateEntry}
+              className="flex items-center gap-2 bg-[#522B5B] hover:bg-[#854F6C] text-[#FBE4D8] px-5 py-3 rounded-full font-bold transition-all shadow-lg hover:shadow-xl hover:-translate-y-0.5 text-sm border border-[#854F6C]/40"
+            >
+              <PenTool className="w-4 h-4" />
+              <span>New Observation</span>
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 mb-6">
@@ -108,6 +143,71 @@ export const JournalDashboard: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Quick Note Fast Modal */}
+      <AnimatePresence>
+        {showQuickNoteModal && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-6"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 15 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 15 }}
+              className="bg-[#190019] border-2 border-[#854F6C] rounded-2xl w-full max-w-md p-6 text-[#FBE4D8] shadow-2xl relative"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <div className="flex items-center gap-2">
+                  <StickyNote className="w-5 h-5 text-[#DFB6B2]" />
+                  <h3 className="font-bold font-[var(--font-journal-display)] text-lg text-[#DFB6B2]">Add Quick Note</h3>
+                </div>
+                <button onClick={() => setShowQuickNoteModal(false)} className="text-[#DFB6B2]/50 hover:text-[#DFB6B2]">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateQuickNote} className="space-y-4">
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder="Quick Note Title (e.g. Star Coordinate)..."
+                  value={quickNoteTitle}
+                  onChange={(e) => setQuickNoteTitle(e.target.value)}
+                  className="w-full bg-[#2B124C] border border-[#854F6C]/40 rounded-xl p-3 text-sm text-[#FBE4D8] outline-none shadow-inner"
+                />
+
+                <textarea
+                  rows={4}
+                  placeholder="Write your fast note content..."
+                  value={quickNoteContent}
+                  onChange={(e) => setQuickNoteContent(e.target.value)}
+                  className="w-full bg-[#2B124C] border border-[#854F6C]/40 rounded-xl p-3 text-xs text-[#FBE4D8] font-[var(--font-journal-body)] outline-none shadow-inner resize-none"
+                />
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickNoteModal(false)}
+                    className="px-4 py-2 rounded-xl text-xs font-bold text-[#DFB6B2]/60 hover:bg-white/10 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#DFB6B2] text-[#190019] hover:bg-[#FBE4D8] shadow transition-all"
+                  >
+                    Save Quick Note
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 };
