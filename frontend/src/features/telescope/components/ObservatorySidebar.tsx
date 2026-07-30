@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTelescopeStore } from '../store/useTelescopeStore';
-import { Search, Star, History, Orbit } from 'lucide-react';
+import { Search, Orbit, Compass, Shield, Sparkles } from 'lucide-react';
 import { useRoomStore } from '../../../store';
 
 const CATEGORIES = [
@@ -8,7 +8,7 @@ const CATEGORIES = [
 ];
 
 export const ObservatorySidebar: React.FC = () => {
-  const { currentCategory, setCurrentCategory, searchQuery, setSearchQuery } = useTelescopeStore();
+  const { currentCategory, setCurrentCategory, searchQuery, setSearchQuery, activeView, setActiveView } = useTelescopeStore();
   const { clearFocus } = useRoomStore();
   const [timeString, setTimeString] = useState('');
   
@@ -73,15 +73,40 @@ export const ObservatorySidebar: React.FC = () => {
         </div>
 
         <div className="mb-8">
-          <h3 className="px-3 text-[10px] font-bold text-[#F4F4F9]/40 uppercase tracking-widest mb-3">My Coordinates</h3>
+          <h3 className="px-3 text-[10px] font-bold text-[#F4F4F9]/40 uppercase tracking-widest mb-3">Observatory Tools</h3>
           <nav className="flex flex-col gap-1">
-            <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#F4F4F9]/60 hover:text-white hover:bg-white/5 transition-all border-l-2 border-transparent">
-              <Star className="w-3.5 h-3.5" />
-              Saved Constellations
+            <button 
+              onClick={() => setActiveView('constellations')}
+              className={`text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-300 flex items-center gap-3 ${
+                activeView === 'constellations'
+                  ? 'font-medium text-white bg-gradient-to-r from-[#4CC9F0]/20 to-transparent border-l-2 border-[#4CC9F0]'
+                  : 'text-[#F4F4F9]/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5 text-[#4CC9F0]" />
+              Constellation Explorer
             </button>
-            <button className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-[#F4F4F9]/60 hover:text-white hover:bg-white/5 transition-all border-l-2 border-transparent">
-              <History className="w-3.5 h-3.5" />
-              Observation Logs
+            <button 
+              onClick={() => setActiveView('aladin')}
+              className={`text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-300 flex items-center gap-3 ${
+                activeView === 'aladin'
+                  ? 'font-medium text-white bg-gradient-to-r from-[#4CC9F0]/20 to-transparent border-l-2 border-[#4CC9F0]'
+                  : 'text-[#F4F4F9]/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-[#4CC9F0]" />
+              Aladin Sky Atlas (Interactive)
+            </button>
+            <button 
+              onClick={() => setActiveView('neows')}
+              className={`text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-300 flex items-center gap-3 ${
+                activeView === 'neows'
+                  ? 'font-medium text-white bg-gradient-to-r from-[#C5A059]/20 to-transparent border-l-2 border-[#C5A059]'
+                  : 'text-[#F4F4F9]/60 hover:text-white hover:bg-white/5 border-l-2 border-transparent'
+              }`}
+            >
+              <Shield className="w-3.5 h-3.5 text-[#C5A059]" />
+              Near-Earth Asteroid Radar
             </button>
           </nav>
         </div>

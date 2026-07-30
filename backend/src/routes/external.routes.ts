@@ -10,5 +10,7 @@ router.use(requireAuth);
 
 router.get('/apod', ExternalController.getApod);
 router.get('/astros', ExternalController.getAstros);
+router.get('/neows', ExternalController.getNearEarthObjects);
+router.get('/iss', ExternalController.getIssLocation);
 
 export default router;

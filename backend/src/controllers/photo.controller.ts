@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
 import { prisma } from '../prisma';
+import { CloudinaryService } from '../services/cloudinary.service';
 
 const getUploadsBaseUrl = (req: Request) => {
   return process.env.PUBLIC_BASE_URL || `${req.protocol}://${req.get('host')}`;
@@ -178,14 +179,22 @@ export const PhotoController = {
       const { mimeType, base64Data } = parseImageDataUrl(imageBase64);
       const buffer = Buffer.from(base64Data, 'base64');
       
-      const filename = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${getImageExtension(mimeType)}`;
-      const uploadsDir = path.join(process.cwd(), 'uploads');
-      const filepath = path.join(uploadsDir, filename);
-      
-      fs.mkdirSync(uploadsDir, { recursive: true });
-      fs.writeFileSync(filepath, buffer);
-      
-      const url = `${getUploadsBaseUrl(req)}/uploads/${filename}`;
+      let url = '';
+
+      // 1. Try Cloudinary Upload
+      const cloudinaryResult = await CloudinaryService.uploadBase64(imageBase64, 'photos');
+      if (cloudinaryResult) {
+        url = cloudinaryResult.url;
+      } else {
+        // 2. Fallback to Local Storage
+        const filename = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${getImageExtension(mimeType)}`;
+        const uploadsDir = path.join(process.cwd(), 'uploads');
+        const filepath = path.join(uploadsDir, filename);
+        
+        fs.mkdirSync(uploadsDir, { recursive: true });
+        fs.writeFileSync(filepath, buffer);
+        url = `${getUploadsBaseUrl(req)}/uploads/${filename}`;
+      }
       
       const resolvedAlbumId = typeof albumId === 'string' && albumId.trim()
         ? albumId.trim()

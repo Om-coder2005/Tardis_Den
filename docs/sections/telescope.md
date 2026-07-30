@@ -22,13 +22,18 @@ The **Telescope** (Zone B: Observation Area) is the primary window to the cosmos
 
 ### ✅ Working Features
 1. **Camera Zoom & Mode Switch**: Smooth transition between 3D room view and full-screen telescope observation viewport.
-2. **Celestial Catalog Filtering**: Browsing and filtering targets by category (Deep Sky, Solar System, Stars).
-3. **High-Res Imagery Viewport**: Pan and zoom controls for detailed image examination.
-4. **Metadata Inspection**: Viewing detailed information, distance, and coordinates for selected celestial bodies.
+2. **NASA APOD Daily Ticker**: Live daily Astronomy Picture of the Day banner with auto-optimized Cloudinary image delivery.
+3. **NASA Image & Video Library Search**: Real-time celestial catalog search & sector filtering (Deep Sky, Nebulae, Planets, Supernova).
+4. **CDS Aladin Lite v3 Interactive Sky Atlas**: Real-time sky map survey navigation powered by Strasbourg astronomical CDS services (`AladinSkyMap.tsx`).
+5. **NASA NeoWS & Live ISS Radar**: Live daily Near-Earth Asteroid detection and 5-second polling of International Space Station latitude/longitude orbit telemetry (`NearEarthTracker.tsx`).
+6. **High-Res Inspection & Captain's Log**: Inspection viewport with pan/zoom controls and persistence of observation notes in the database.
 
-### ❌ Non-Working / Planned Features
-1. **Interactive Constellation Overlay**: Vector line overlays mapping constellations dynamically onto the viewport.
-2. **AI Voice Celestial Guide**: AI Companion voice narration explaining scientific details when focusing on specific targets.
+---
 
-### ⚠️ Redundant / Mocked Components
-1. **Live Sky API Telemetry**: Coordinates and imagery currently rely on local target definitions and static image assets rather than live telescope APIs (e.g. Aladin Sky Atlas / NASA SkyView).
+## 4. Connected APIs & Efficiency
+
+- **CDS Aladin Lite v3 CDN**: Real-time interactive sky survey (`aladin.cds.unistra.fr`).
+- **NASA Image & Video Library API**: Live search for thousands of real Hubble & JWST space photos (`images-api.nasa.gov`).
+- **NASA APOD & NeoWS Asteroid API**: Daily astronomy imagery & close-approach asteroid telemetry (`api.nasa.gov`).
+- **Open-Notify ISS Tracker API**: 5-second interval polling for real-time ISS orbital coordinates (`api.open-notify.org/iss-now.json`).
+- **Cloudinary Image Optimization**: Auto WebP/AVIF format conversion and dynamic thumbnail scaling for zero-latency viewport rendering.

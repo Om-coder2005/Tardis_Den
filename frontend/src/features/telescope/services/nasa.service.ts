@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { getOptimizedImageUrl } from '../../../utils/imageOptimizer';
 
 export interface NasaImageItem {
   nasa_id: string;
@@ -25,7 +26,7 @@ export const useNasaImageSearch = (category: string, query: string) => {
         // The original image requires another API call, but we can guess it's usually `~orig.jpg` or we just use `~large.jpg` which is generally present in the links, though sometimes it's not directly in `item.links`.
         // A safer way is to use the `collection.json` url, but for simplicity, replacing `~thumb` with `~orig` or `~large` works 99% of the time.
         const thumbnail = links[0]?.href || '';
-        const high_res = thumbnail.replace('~thumb', '~orig');
+        const rawHighRes = thumbnail.replace('~thumb', '~orig');
 
         return {
           nasa_id: data.nasa_id,
@@ -33,8 +34,8 @@ export const useNasaImageSearch = (category: string, query: string) => {
           description: data.description,
           date_created: data.date_created,
           keywords: data.keywords || [],
-          thumbnail,
-          high_res,
+          thumbnail: getOptimizedImageUrl(thumbnail, { width: 400, quality: 'auto' }),
+          high_res: getOptimizedImageUrl(rawHighRes, { quality: 'auto' }),
           center: data.center,
         } as NasaImageItem;
       });
