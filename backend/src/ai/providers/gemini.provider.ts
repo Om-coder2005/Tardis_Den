@@ -24,18 +24,40 @@ export class GeminiProvider implements IAIProvider {
 
     contents.push({ role: 'user', parts: [{ text: payload.prompt }] });
 
-    const modelName = process.env.GEMINI_MODEL || 'gemini-2.0-flash-lite';
+    // Prioritized list of free-tier compatible Gemini models
+    const candidateModels = [
+      process.env.GEMINI_MODEL,
+      'gemini-1.5-flash',
+      'gemini-2.0-flash-exp',
+      'gemini-1.5-pro',
+    ].filter(Boolean) as string[];
 
-    const responseStream = await ai.models.generateContentStream({
-      model: modelName,
-      contents,
-      config: {
-        systemInstruction: {
-          role: 'system',
-          parts: [{ text: payload.systemInstruction }]
-        }
+    let responseStream = null;
+    let lastError: any = null;
+
+    for (const modelName of candidateModels) {
+      try {
+        responseStream = await ai.models.generateContentStream({
+          model: modelName,
+          contents,
+          config: {
+            systemInstruction: {
+              role: 'system',
+              parts: [{ text: payload.systemInstruction }]
+            }
+          }
+        });
+        // If stream creation succeeds without throwing 404/NOT_FOUND, break loop
+        if (responseStream) break;
+      } catch (err: any) {
+        lastError = err;
+        console.warn(`[Gemini Provider] Model ${modelName} failed or unavailable. Trying next candidate...`);
       }
-    });
+    }
+
+    if (!responseStream) {
+      throw lastError || new Error('No available Gemini model could be reached on your API key.');
+    }
 
     for await (const chunk of responseStream) {
       if (chunk.text) {
