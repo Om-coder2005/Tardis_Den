@@ -86,8 +86,12 @@ const getLocalEntries = (): JournalEntry[] => {
       localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(INITIAL_OBSERVATORY_ENTRIES));
       return INITIAL_OBSERVATORY_ENTRIES;
     }
-    const parsed = JSON.parse(raw);
-    return parsed.length > 0 ? parsed : INITIAL_OBSERVATORY_ENTRIES;
+    const parsed: JournalEntry[] = JSON.parse(raw);
+    const cleaned = parsed.filter(e => e.type !== 'pinned');
+    if (cleaned.length !== parsed.length) {
+      localStorage.setItem(LOCAL_ENTRIES_KEY, JSON.stringify(cleaned));
+    }
+    return cleaned.length > 0 ? cleaned : INITIAL_OBSERVATORY_ENTRIES;
   } catch {
     return INITIAL_OBSERVATORY_ENTRIES;
   }
