@@ -21,7 +21,7 @@ export const BookshelfModule: React.FC = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.98, y: 10 }}
           transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-          className="absolute inset-4 md:inset-8 lg:inset-12 z-50 bg-[#0B0F19] rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col border border-[#1E293B] font-[var(--font-library-sans)] text-[#F8FAFC]"
+          className="fixed inset-4 md:inset-8 lg:inset-12 z-50 bg-[#0B0F19] rounded-2xl shadow-[0_24px_80px_rgba(0,0,0,0.6)] overflow-hidden flex flex-col border border-[#1E293B] font-[var(--font-library-sans)] text-[#F8FAFC]"
         >
           {/* Global Close Button Overlay */}
           <button 

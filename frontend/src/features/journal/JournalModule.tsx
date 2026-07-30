@@ -30,7 +30,7 @@ export const JournalModule: React.FC = () => {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
           transition={{ type: 'spring', damping: 26, stiffness: 190, mass: 0.9 }}
-          className="absolute inset-3 md:inset-6 lg:inset-10 z-50 bg-[#1c0f1d] rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.85)] border-4 border-[#854F6C]/40 flex flex-col overflow-hidden font-[var(--font-journal-body)] text-[#FBE4D8] relative"
+          className="fixed inset-3 md:inset-6 lg:inset-10 z-50 bg-[#1c0f1d] rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.85)] border-4 border-[#854F6C]/40 flex flex-col overflow-hidden font-[var(--font-journal-body)] text-[#FBE4D8]"
         >
           {/* Top Leather Binder Bar & Satin Bookmark Ribbons */}
           <div className="h-14 bg-[#140a15] border-b-2 border-[#854F6C]/30 flex items-center justify-between px-8 relative z-30 shrink-0 select-none">
