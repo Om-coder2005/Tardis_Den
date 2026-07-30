@@ -73,7 +73,7 @@ export const AICompanion: React.FC = () => {
     <AnimatePresence>
       {isOpen && (
         <ErrorBoundary fallback={
-          <div className="absolute right-0 top-0 bottom-0 w-[400px] retro-panel rounded-l-none border-t-0 border-r-0 border-b-0 flex flex-col items-center justify-center p-6 text-center z-50 bg-white">
+          <div className="fixed right-0 top-0 bottom-0 h-full w-[400px] retro-panel rounded-l-none border-t-0 border-r-0 border-b-0 flex flex-col items-center justify-center p-6 text-center z-[9999] bg-white">
             <X className="w-12 h-12 text-red-500 mb-4" />
             <h3 className="text-lg font-bold text-black mb-2">AI Panel Crashed</h3>
             <p className="text-sm text-black/70 mb-4">The AI Companion encountered a fatal error. Other systems remain operational.</p>
@@ -93,7 +93,7 @@ export const AICompanion: React.FC = () => {
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: '100%', opacity: 0 }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="absolute right-0 top-0 bottom-0 w-[400px] retro-panel rounded-l-none border-t-0 border-r-0 border-b-0 flex flex-col z-50 shadow-[-10px_0_0_0_rgba(0,0,0,1)] bg-white"
+            className="fixed right-0 top-0 bottom-0 h-full w-[400px] retro-panel rounded-l-none border-t-0 border-r-0 border-b-0 flex flex-col z-[9999] shadow-[-10px_0_0_0_rgba(0,0,0,1)] bg-white"
           >
             {/* Header */}
             <div className="h-16 flex items-center justify-between px-6 border-b-2 border-black bg-white">
