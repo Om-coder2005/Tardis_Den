@@ -11,6 +11,7 @@ import { AladinSkyMap } from './components/AladinSkyMap';
 import { NearEarthTracker } from './components/NearEarthTracker';
 import { ConstellationsViewer } from './components/ConstellationsViewer';
 import { TelescopeLensOverlay } from './components/TelescopeLensOverlay';
+import { QuickNotesDrawer } from './components/QuickNotesDrawer';
 import { X, Sparkles } from 'lucide-react';
 
 export const TelescopeModule: React.FC = () => {
@@ -60,6 +61,9 @@ export const TelescopeModule: React.FC = () => {
             <div className="flex-1 relative flex overflow-hidden">
               {/* Animated Telescope HUD & Vignette Optics */}
               <TelescopeLensOverlay />
+
+              {/* Slide-out Quick Notes Drawer (Tucked discreetly at right edge) */}
+              <QuickNotesDrawer />
 
               {activeView === 'catalog' && <ObservationBrowser />}
               
