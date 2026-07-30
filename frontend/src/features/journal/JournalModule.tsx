@@ -26,18 +26,22 @@ export const JournalModule: React.FC = () => {
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          initial={{ opacity: 0, scale: 0.96, y: 15 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          transition={{ type: 'spring', damping: 26, stiffness: 190, mass: 0.9 }}
-          className="fixed inset-3 md:inset-6 lg:inset-10 z-50 bg-[#1c0f1d] rounded-[2.5rem] shadow-[0_30px_100px_rgba(0,0,0,0.85)] border-4 border-[#854F6C]/40 flex flex-col overflow-hidden font-[var(--font-journal-body)] text-[#FBE4D8]"
+          initial={{ opacity: 0, scale: 0.90, rotateY: -25, y: 20 }}
+          animate={{ opacity: 1, scale: 1, rotateY: 0, y: 0 }}
+          exit={{ opacity: 0, scale: 0.90, rotateY: 25, y: 20 }}
+          transition={{ type: 'spring', damping: 24, stiffness: 180, mass: 0.85 }}
+          style={{ perspective: 1500, transformStyle: 'preserve-3d', transformOrigin: 'left center' }}
+          className="fixed inset-3 md:inset-6 lg:inset-10 z-50 bg-[#1c0f1d] rounded-[2.5rem] shadow-[0_35px_120px_rgba(0,0,0,0.9)] border-4 border-[#854F6C]/40 flex flex-col overflow-hidden font-[var(--font-journal-body)] text-[#FBE4D8]"
         >
+          {/* Leather Book Spine Binding Crease Shadow */}
+          <div className="absolute left-0 top-0 bottom-0 w-6 bg-gradient-to-r from-black/80 via-black/40 to-transparent pointer-events-none z-40 border-r border-[#854F6C]/30" />
+
           {/* Top Leather Binder Bar & Satin Bookmark Ribbons */}
           <div className="h-14 bg-[#140a15] border-b-2 border-[#854F6C]/30 flex items-center justify-between px-8 relative z-30 shrink-0 select-none">
             
             {/* Lock Indicator & Title */}
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 px-3 py-1 bg-[#2B124C] border border-[#854F6C]/40 rounded-full text-xs font-[var(--font-journal-mono)] text-[#DFB6B2]">
+            <div className="flex items-center gap-3 pl-4">
+              <div className="flex items-center gap-2 px-3.5 py-1 bg-[#2B124C] border border-[#854F6C]/40 rounded-full text-xs font-[var(--font-journal-mono)] text-[#DFB6B2] shadow-inner">
                 <Lock className="w-3.5 h-3.5 text-[#DFB6B2]" />
                 <span>Private Observatory Diary</span>
               </div>
@@ -101,10 +105,11 @@ export const JournalModule: React.FC = () => {
                 {selectedEntryId ? (
                   <motion.div
                     key="editor"
-                    initial={{ opacity: 0, scale: 0.98, x: 20 }}
-                    animate={{ opacity: 1, scale: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.98, x: -20 }}
-                    transition={{ duration: 0.35, ease: 'easeOut' }}
+                    initial={{ opacity: 0, rotateY: -15, scale: 0.97 }}
+                    animate={{ opacity: 1, rotateY: 0, scale: 1 }}
+                    exit={{ opacity: 0, rotateY: 15, scale: 0.97 }}
+                    transition={{ duration: 0.4, ease: 'easeOut' }}
+                    style={{ transformOrigin: 'left center' }}
                     className="w-full h-full flex"
                   >
                     <JournalEditor />
