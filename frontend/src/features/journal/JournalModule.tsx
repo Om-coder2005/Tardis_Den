@@ -5,7 +5,7 @@ import { useJournalStore } from './store/useJournalStore';
 import { JournalSidebar } from './components/JournalSidebar';
 import { JournalEditor } from './components/JournalEditor';
 import { JournalDashboard } from './components/JournalDashboard';
-import { X, Lock, Bookmark, Star, BookOpen, PenTool } from 'lucide-react';
+import { X, Lock, Star, BookOpen, PenTool } from 'lucide-react';
 import { AIToggleButton } from '../ai/AIToggleButton';
 import { useCreateJournalEntry } from './services/journal.service';
 
