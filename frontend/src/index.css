@@ -55,7 +55,7 @@
 }
 
 /* Base Theme (Day) */
-:root {
+:root, html.theme-day {
   --color-bg-room-val: #EADDCD;
   --color-bg-panel-val: #FDF9F1;
   --color-bg-titlebar-val: #5C4033; /* Walnut wood */
@@ -78,6 +78,15 @@ html.theme-night {
   --color-accent-val: #E2E8F0; /* Moonlit */
   --color-accent-hover-val: #F8FAFC;
   --color-shadow-val: rgba(0, 0, 0, 0.4);
+}
+
+/* Reduced Motion Mode */
+html.reduced-motion *, 
+html.reduced-motion *::before, 
+html.reduced-motion *::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.001ms !important;
 }
 
 @layer utilities {

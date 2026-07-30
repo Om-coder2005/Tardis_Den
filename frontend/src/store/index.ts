@@ -70,12 +70,4 @@ export const useRoomStore = create<RoomState>((set) => ({
   clearFocus: () => set({ focusedObjectId: null }),
 }));
 
-interface SettingsState {
-  audioEnabled: boolean;
-  toggleAudio: () => void;
-}
-
-export const useSettingsStore = create<SettingsState>((set) => ({
-  audioEnabled: true,
-  toggleAudio: () => set((state) => ({ audioEnabled: !state.audioEnabled })),
-}));
+export { useSettingsStore } from '../features/computer/store/useSettingsStore';

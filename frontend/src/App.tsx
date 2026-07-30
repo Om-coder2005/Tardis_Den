@@ -28,7 +28,16 @@ const NotFound = () => (
 );
 
 function App() {
-  const { theme, accentColor } = useSettingsStore();
+  const { theme, accentColor, reducedMotion } = useSettingsStore();
+
+  useEffect(() => {
+    const root = document.documentElement;
+    if (reducedMotion) {
+      root.classList.add('reduced-motion');
+    } else {
+      root.classList.remove('reduced-motion');
+    }
+  }, [reducedMotion]);
 
   useEffect(() => {
     const root = document.documentElement;

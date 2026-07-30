@@ -5,8 +5,9 @@ import { useEnvironmentStore } from '../../room/store/useEnvironmentStore';
 import { useAudioStore } from '../store/useAudioStore';
 
 export const AudioEngine: React.FC = () => {
-  const { isMuted, interactionQueue } = useAudioStore();
-  const { masterVolume, ambientVolume } = useSettingsStore();
+  const { isMuted: audioStoreMuted, interactionQueue } = useAudioStore();
+  const { masterVolume, ambientVolume, uiVolume, isMuted: settingsMuted } = useSettingsStore();
+  const isMuted = audioStoreMuted || settingsMuted;
   const { weather } = useEnvironmentStore();
   const { focusedObjectId } = useRoomStore();
 
@@ -33,6 +34,8 @@ export const AudioEngine: React.FC = () => {
       weatherAudioRef.current.volume = finalVolume * 0.8; // Weather slightly quieter
       if (finalVolume > 0 && weatherTrackUrl && weatherAudioRef.current.paused) {
         weatherAudioRef.current.play().catch(e => console.log('Weather autoplay blocked until interaction', e));
+      } else if (finalVolume === 0 && weatherAudioRef.current && !weatherAudioRef.current.paused) {
+        weatherAudioRef.current.pause();
       }
     }
   }, [masterVolume, ambientVolume, isMuted, weatherTrackUrl, focusedObjectId]);
@@ -42,10 +45,10 @@ export const AudioEngine: React.FC = () => {
     if (interactionQueue.length > 0 && !isMuted) {
       const latest = interactionQueue[interactionQueue.length - 1];
       const audio = new Audio(latest.url);
-      audio.volume = masterVolume;
+      audio.volume = masterVolume * uiVolume;
       audio.play().catch(e => console.log('Interaction audio error', e));
     }
-  }, [interactionQueue, masterVolume, isMuted]);
+  }, [interactionQueue, masterVolume, uiVolume, isMuted]);
 
   // Setup click listener to unlock audio engine context
   useEffect(() => {

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSettingsStore, type ThemeMode, type AccentColor } from '../store/useSettingsStore';
 import { useEnvironmentStore, type TimeOfDay, type Weather } from '../../room/store/useEnvironmentStore';
-import { Palette, Home, Image, Volume2, Eye, Zap, Database, Check } from 'lucide-react';
+import { Palette, Home, Image, Volume2, Eye, Zap, Database, Check, Upload, Trash2 } from 'lucide-react';
 
 const WALLPAPERS = [
   { id: '1', name: 'Observatory', url: '/wallpapers/javier-miranda-AlJ9TQqeCV0-unsplash.jpg' },
@@ -29,6 +29,7 @@ export const SettingsApp: React.FC = () => {
     theme, setTheme, 
     accentColor, setAccentColor,
     currentWallpaper, setWallpaper,
+    customWallpapers, addCustomWallpaper, removeCustomWallpaper,
     masterVolume, ambientVolume, uiVolume, isMuted,
     setMasterVolume, setAmbientVolume, setUiVolume, toggleMute,
     reducedMotion, highContrast, largeFonts,
@@ -41,6 +42,30 @@ export const SettingsApp: React.FC = () => {
 
   const [activeTab, setActiveTab] = useState('Appearance');
   const [resetSuccess, setResetSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file (JPG, PNG, WebP, etc.).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        addCustomWallpaper({
+          id: `custom_${Date.now()}`,
+          name: file.name.replace(/\.[^/.]+$/, ""),
+          url: result
+        });
+      }
+    };
+    reader.readAsDataURL(file);
+  };
 
   const tabs: { id: string; label: string; icon: React.ReactNode }[] = [
     { id: 'Appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
@@ -216,8 +241,73 @@ export const SettingsApp: React.FC = () => {
         {/* WALLPAPER TAB */}
         {activeTab === 'Wallpaper' && (
           <div className="space-y-6 max-w-3xl">
+            {/* Custom Upload Card */}
+            <div className="bg-white border-2 border-[#190019] p-4 shadow-[4px_4px_0px_#190019] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="font-bold uppercase text-xs tracking-widest text-[#854f6c]">Custom Wallpaper Upload</h3>
+                <p className="text-xs text-[#190019]/70 mt-1">Upload a custom image from your device (JPG, PNG, WebP) to set as desktop background.</p>
+              </div>
+
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileUpload}
+                className="hidden"
+              />
+
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-[#2b124c] text-[#fbe4d8] px-4 py-2.5 border-2 border-[#190019] font-bold text-xs flex items-center gap-2 hover:bg-[#854f6c] transition-all shadow-[2px_2px_0px_#190019] shrink-0"
+              >
+                <Upload className="w-4 h-4" />
+                <span>Upload Image</span>
+              </button>
+            </div>
+
+            {/* Custom Uploads Grid */}
+            {customWallpapers.length > 0 && (
+              <div>
+                <h4 className="font-bold text-xs uppercase tracking-widest text-[#854f6c] mb-3">Your Custom Uploads ({customWallpapers.length})</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+                  {customWallpapers.map((wp) => (
+                    <div
+                      key={wp.id}
+                      onClick={() => setWallpaper(wp.url)}
+                      className={`relative aspect-video border-2 border-[#190019] cursor-pointer overflow-hidden transition-all group ${
+                        currentWallpaper === wp.url
+                          ? 'ring-4 ring-[#854f6c] shadow-[4px_4px_0px_#190019] scale-[1.02]'
+                          : 'hover:scale-[1.01] hover:shadow-[2px_2px_0px_#190019]'
+                      }`}
+                    >
+                      <img src={wp.url} alt={wp.name} className="w-full h-full object-cover" />
+                      <div className="absolute inset-x-0 bottom-0 bg-[#190019]/85 text-[#fbe4d8] p-2 text-xs font-bold flex items-center justify-between">
+                        <span className="truncate pr-2">{wp.name}</span>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {currentWallpaper === wp.url && <Check className="w-3.5 h-3.5 text-[#dfb6b2]" />}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Remove custom wallpaper "${wp.name}"?`)) {
+                                removeCustomWallpaper(wp.id);
+                              }
+                            }}
+                            className="p-1 hover:text-red-400 transition-colors"
+                            title="Delete custom wallpaper"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Preset Wallpapers Header */}
             <p className="text-xs text-[#190019]/80 font-bold bg-[#dfb6b2] p-3 border border-[#190019]">
-              Select background wallpaper for the Work Desk computer desktop ({WALLPAPERS.length} available):
+              Built-in Preset Wallpapers ({WALLPAPERS.length} available):
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
               {WALLPAPERS.map((wp) => (
