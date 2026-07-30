@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { useEnvironmentStore } from '../store/useEnvironmentStore';
 
 export const EnvironmentLayer: React.FC = () => {
-  const { timeOfDay, autoMode, setTimeOfDay } = useEnvironmentStore();
+  const { timeOfDay, weather, autoMode, setTimeOfDay } = useEnvironmentStore();
 
   // Auto-mode clock logic
   useEffect(() => {
@@ -43,12 +43,28 @@ export const EnvironmentLayer: React.FC = () => {
     }
   };
 
+  const getWeatherOverlayStyle = () => {
+    switch (weather) {
+      case 'rain':
+        return { backgroundColor: 'rgba(20, 30, 50, 0.22)', mixBlendMode: 'multiply' as const };
+      case 'cloudy':
+        return { backgroundColor: 'rgba(80, 95, 120, 0.12)', mixBlendMode: 'multiply' as const };
+      default:
+        return {};
+    }
+  };
+
   return (
     <>
       {/* Time of Day Color Grading Overlay */}
       <div 
         className="absolute inset-0 pointer-events-none transition-colors duration-[3000ms] ease-in-out z-10"
         style={getOverlayStyle()}
+      />
+      {/* Weather Overlay */}
+      <div 
+        className="absolute inset-0 pointer-events-none transition-colors duration-[2000ms] ease-in-out z-10"
+        style={getWeatherOverlayStyle()}
       />
     </>
   );
