@@ -28,6 +28,8 @@ export class GeminiProvider implements IAIProvider {
     const candidateModels = [
       process.env.GEMINI_MODEL,
       'gemini-flash-latest',
+      'gemini-3.5-flash-lite',
+      'gemini-3.6-flash',
       'gemini-flash-lite-latest',
       'gemini-2.0-flash-lite',
       'gemini-2.0-flash',
