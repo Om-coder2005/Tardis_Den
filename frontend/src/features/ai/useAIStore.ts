@@ -45,7 +45,7 @@ export const useAIStore = create<AIState>((set) => ({
   setContext: (context) => set({ context }),
 
   addMessage: (msg) => {
-    const id = Date.now().toString();
+    const id = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
     set((state) => ({
       messages: [...state.messages, { ...msg, id }]
     }));

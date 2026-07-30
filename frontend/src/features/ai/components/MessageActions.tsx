@@ -27,20 +27,20 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
   if (isStreaming || !content.trim()) return null;
 
   return (
-    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-black/10 text-xs">
+    <div className="flex items-center gap-3 mt-3 pt-2 border-t border-[#334155]/60 text-xs">
       <button
         onClick={handleCopy}
-        className="flex items-center gap-1 text-black/70 hover:text-black font-medium transition-colors"
+        className="flex items-center gap-1.5 text-[#94A3B8] hover:text-[#F8FAFC] font-medium transition-colors"
         title="Copy response"
       >
-        {copied ? <Check className="w-3.5 h-3.5 text-green-700" /> : <Copy className="w-3.5 h-3.5" />}
+        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
         <span>{copied ? 'Copied' : 'Copy'}</span>
       </button>
 
       {onRegenerate && (
         <button
           onClick={onRegenerate}
-          className="flex items-center gap-1 text-black/70 hover:text-black font-medium transition-colors ml-2"
+          className="flex items-center gap-1.5 text-[#94A3B8] hover:text-[#F8FAFC] font-medium transition-colors"
           title="Regenerate response"
         >
           <RotateCcw className="w-3.5 h-3.5" />
