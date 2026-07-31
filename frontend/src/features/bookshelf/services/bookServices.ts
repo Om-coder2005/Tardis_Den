@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import api from '../../../lib/api';
 import { getOptimizedImageUrl } from '../../../utils/imageOptimizer';
 
 const API_BASE = '/api/external';
@@ -80,7 +81,7 @@ export const useGoogleBooksQuery = (query: string) => {
     queryFn: async () => {
       if (!query) return [];
       try {
-        const res = await axios.get(`${API_BASE}/google-books?q=${encodeURIComponent(query)}`);
+        const res = await api.get(`${API_BASE}/google-books?q=${encodeURIComponent(query)}`);
         const items = res.data?.items || [];
         
         return items.map((item: any) => {
@@ -117,11 +118,11 @@ export const useGutendexQuery = (topic: string, query: string) => {
     queryFn: async () => {
       try {
         const searchTerm = query || topic || 'science';
-        let res = await axios.get(`${API_BASE}/gutendex?topic=${encodeURIComponent(searchTerm)}`);
+        let res = await api.get(`${API_BASE}/gutendex?topic=${encodeURIComponent(searchTerm)}`);
         let results = res.data?.results || [];
 
         if (results.length === 0) {
-          res = await axios.get(`${API_BASE}/gutendex?q=${encodeURIComponent(searchTerm)}`);
+          res = await api.get(`${API_BASE}/gutendex?q=${encodeURIComponent(searchTerm)}`);
           results = res.data?.results || [];
         }
 
@@ -158,7 +159,7 @@ export const useGutendexFullTextQuery = (bookId: number | null, enabled: boolean
     queryFn: async () => {
       if (!bookId) return '';
       try {
-        const res = await axios.get(`${API_BASE}/gutendex/${bookId}/text`);
+        const res = await api.get(`${API_BASE}/gutendex/${bookId}/text`);
         return res.data?.text || 'Text content unavailable.';
       } catch (err) {
         return 'Text content unavailable for this volume.';
