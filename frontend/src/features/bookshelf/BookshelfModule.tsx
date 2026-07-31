@@ -5,6 +5,7 @@ import { useBookshelfStore } from './store/useBookshelfStore';
 import { ArchiveSidebar } from './components/ArchiveSidebar';
 import { LibraryBrowser } from './components/LibraryBrowser';
 import { ReadingContextPanel } from './components/ReadingContextPanel';
+import { EbookReaderModal } from './components/EbookReaderModal';
 import { AIToggleButton } from '../ai/AIToggleButton';
 import { X } from 'lucide-react';
 
@@ -38,6 +39,9 @@ export const BookshelfModule: React.FC = () => {
               data: selectedContentId ? 'Reading book/document ' + selectedContentId : null 
             }} 
           />
+
+          {/* Full-Text eBook Reader Modal */}
+          <EbookReaderModal />
 
           {/* 3-Pane Layout */}
           <div className="flex-1 flex overflow-hidden relative">

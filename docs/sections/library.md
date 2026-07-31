@@ -21,15 +21,18 @@ The **Library** (Zone A: Knowledge Area) houses the user's knowledge collection,
 ## 3. Current Implementation Status
 
 ### ✅ Working Features
-1. **Bookshelf Transition**: Smooth transition from room view to the interactive bookshelf interface upon clicking the bookshelf object.
-2. **Library Catalog Browser**: Searching, filtering, and selecting books from the library catalog.
-3. **Markdown Text Reader**: Rendering book content, chapters, and documentation with custom styling.
-4. **Archive Sidebar Navigation**: Viewing reading list history and saved reference tags.
+1. **Bookshelf Focus Transition**: Smooth transition from room view to the interactive bookshelf interface.
+2. **Google Books API Integration**: Global search and metadata inspection for millions of book volumes (`/api/external/google-books`).
+3. **Gutendex Free Public Domain eBooks**: Instant browsing and indexing of thousands of classic science & literature volumes (`/api/external/gutendex`).
+4. **In-App Full-Text eBook Reader ([EbookReaderModal.tsx](file:///d:/the_space/frontend/src/features/bookshelf/components/EbookReaderModal.tsx))**: Full-text reading mode directly inside the app for Gutenberg public domain classics (`/api/external/gutendex/:id/text`).
+5. **Personal Vault & Bookmark Filtering**: Persisting saved volumes, reading timestamps, and filtering bookmarks in PostgreSQL via Prisma.
+6. **Cloudinary Cover Art Optimization**: Auto WebP formatting and dynamic resizing for all book covers.
 
-### ❌ Non-Working / Planned Features
-1. **PDF / EPUB File Parser**: Direct upload and parsing of `.pdf` or `.epub` files (currently content must be provided as text/markdown).
-2. **3D Physical Book Slide-Out**: Animated physical book extraction from the 3D room canvas before opening the reader view.
-3. **Cross-Device Bookmark Sync**: Cloud synchronization of bookmarks across multiple active sessions.
+---
 
-### ⚠️ Redundant / Mocked Components
-1. **AI Reading Explanations**: Contextual AI explanations for highlighted text selections are stubbed out and return simulated response cards.
+## 4. Connected APIs & Efficiency
+
+- **Google Books API**: Search index & metadata (`www.googleapis.com/books/v1/volumes`).
+- **Gutendex API**: Free public domain ebook index (`gutendex.com/books`).
+- **Project Gutenberg Plain Text Proxy**: Full-text eBook fetching (`www.gutenberg.org/files`).
+- **Cloudinary Image Optimizer**: Auto WebP image compression for book covers.

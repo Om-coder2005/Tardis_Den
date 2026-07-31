@@ -12,5 +12,8 @@ router.get('/apod', ExternalController.getApod);
 router.get('/astros', ExternalController.getAstros);
 router.get('/neows', ExternalController.getNearEarthObjects);
 router.get('/iss', ExternalController.getIssLocation);
+router.get('/google-books', ExternalController.searchGoogleBooks);
+router.get('/gutendex', ExternalController.getGutendexBooks);
+router.get('/gutendex/:id/text', ExternalController.getGutendexTextContent);
 
 export default router;
