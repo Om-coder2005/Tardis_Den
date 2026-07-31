@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
+import api from '../../../lib/api';
 
 const API_BASE = '/api/external';
 
@@ -23,7 +23,7 @@ export const useDynamicMusicQuery = (genreTag: string = 'chillout') => {
     queryKey: ['dynamic_music', genreTag],
     queryFn: async () => {
       try {
-        const res = await axios.get(`${API_BASE}/music?tag=${encodeURIComponent(genreTag)}`);
+        const res = await api.get(`${API_BASE}/music?tag=${encodeURIComponent(genreTag)}`);
         return (res.data || []) as DynamicMusicTrack[];
       } catch (err) {
         console.warn('Music API query error:', err);
@@ -40,7 +40,7 @@ export const useMindfulnessQuoteQuery = () => {
     queryKey: ['daily_mindfulness_quote'],
     queryFn: async () => {
       try {
-        const res = await axios.get(`${API_BASE}/quote`);
+        const res = await api.get(`${API_BASE}/quote`);
         return res.data as MindfulnessQuote;
       } catch (err) {
         return {

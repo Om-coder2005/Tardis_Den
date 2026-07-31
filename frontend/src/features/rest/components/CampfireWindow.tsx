@@ -166,10 +166,10 @@ export const CampfireWindow: React.FC = () => {
                   "{currentCard.question}"
                 </p>
 
-                {quoteData && (
+                {quoteData && quoteData.quote && (
                   <div className="mt-4 p-3 bg-[#DFB6B2]/30 border border-[#854F6C]/40 rounded text-xs italic text-[#2B124C]">
                     <span className="font-bold uppercase not-italic text-[9px] block text-[#854F6C] font-mono mb-1">Daily Mindfulness Quote</span>
-                    "{quoteData.quote}" — <span className="font-bold not-italic">{quoteData.author}</span>
+                    "{quoteData.quote}"{quoteData.author ? ` — ` : ''}{quoteData.author && <span className="font-bold not-italic">{quoteData.author}</span>}
                   </div>
                 )}
               </div>
