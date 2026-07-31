@@ -1,6 +1,6 @@
 import React from 'react';
 import { useBookshelfStore } from '../store/useBookshelfStore';
-import { useGoogleBooksQuery, useGutendexQuery } from '../services/bookServices';
+import { useGoogleBooksQuery, useGutendexQuery, useOpenLibraryQuery } from '../services/bookServices';
 import type { UnifiedBookItem } from '../services/bookServices';
 import { useLibraryRecords } from '../services/library.service';
 import { BookOpen, BookCheck, Globe, Library } from 'lucide-react';
@@ -15,23 +15,33 @@ export const LibraryBrowser: React.FC = () => {
     showFavoritesOnly 
   } = useBookshelfStore();
 
+  const { data: openLibraryBooks = [], isLoading: loadingOpenLib } = useOpenLibraryQuery(currentCategory, searchQuery);
   const { data: googleBooks = [], isLoading: loadingGoogle } = useGoogleBooksQuery(searchQuery || currentCategory);
   const { data: gutendexBooks = [], isLoading: loadingGutendex } = useGutendexQuery(currentCategory, searchQuery);
   const { data: records = {} } = useLibraryRecords();
 
-  // Combine feeds
+  // Combine feeds with fallback
   let combinedBooks: UnifiedBookItem[] = [];
-  if (activeSource === 'google') combinedBooks = googleBooks;
-  else if (activeSource === 'gutendex') combinedBooks = gutendexBooks;
-  else combinedBooks = [...gutendexBooks, ...googleBooks];
+  if (activeSource === 'google') {
+    combinedBooks = googleBooks.length > 0 ? googleBooks : openLibraryBooks;
+  } else if (activeSource === 'gutendex') {
+    combinedBooks = gutendexBooks.length > 0 ? gutendexBooks : openLibraryBooks;
+  } else {
+    // Combine all available sources, prioritizing OpenLibrary if API proxies fail
+    const map = new Map<string, UnifiedBookItem>();
+    [...openLibraryBooks, ...gutendexBooks, ...googleBooks].forEach(b => {
+      if (b.title && !map.has(b.title.toLowerCase())) {
+        map.set(b.title.toLowerCase(), b);
+      }
+    });
+    combinedBooks = Array.from(map.values());
+  }
 
   if (showFavoritesOnly) {
     combinedBooks = combinedBooks.filter((b) => records[b.id]?.isFavorite);
   }
 
-  const isLoading = (activeSource === 'google' && loadingGoogle) ||
-                    (activeSource === 'gutendex' && loadingGutendex) ||
-                    (activeSource === 'all' && loadingGoogle && loadingGutendex);
+  const isLoading = loadingOpenLib && loadingGoogle && loadingGutendex;
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0B0F19] text-[#F8FAFC] overflow-y-auto custom-scrollbar">
