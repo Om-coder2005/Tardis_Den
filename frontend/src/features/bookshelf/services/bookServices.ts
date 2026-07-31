@@ -53,12 +53,19 @@ export const useGoogleBooksQuery = (query: string) => {
 };
 
 // 2. Fetch Gutendex Free Public Domain eBooks
-export const useGutendexQuery = (topic: string) => {
+export const useGutendexQuery = (topic: string, query: string) => {
   return useQuery({
-    queryKey: ['gutendex_books', topic],
+    queryKey: ['gutendex_books', topic, query],
     queryFn: async () => {
-      const res = await axios.get(`${API_BASE}/gutendex?topic=${encodeURIComponent(topic)}`);
-      const results = res.data?.results || [];
+      const searchTerm = query || topic || 'science';
+      let res = await axios.get(`${API_BASE}/gutendex?topic=${encodeURIComponent(searchTerm)}`);
+      let results = res.data?.results || [];
+
+      // If topic query yielded no results, try searching text search parameter
+      if (results.length === 0) {
+        res = await axios.get(`${API_BASE}/gutendex?q=${encodeURIComponent(searchTerm)}`);
+        results = res.data?.results || [];
+      }
 
       return results.map((book: any) => {
         const rawCover = book.formats?.['image/jpeg'] || '';
@@ -71,7 +78,7 @@ export const useGutendexQuery = (topic: string) => {
           authors: authorNames,
           coverUrl: getOptimizedImageUrl(rawCover, { width: 300 }),
           publishYear: 'Classic',
-          description: `Full-text public domain classic eBook (${book.download_count.toLocaleString()} downloads).`,
+          description: `Full-text public domain classic eBook (${book.download_count?.toLocaleString() || 0} downloads).`,
           source: 'gutendex',
           fullTextAvailable: true,
           categories: book.subjects?.slice(0, 3) || [],

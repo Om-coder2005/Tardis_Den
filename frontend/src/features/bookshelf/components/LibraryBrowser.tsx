@@ -16,7 +16,7 @@ export const LibraryBrowser: React.FC = () => {
   } = useBookshelfStore();
 
   const { data: googleBooks = [], isLoading: loadingGoogle } = useGoogleBooksQuery(searchQuery || currentCategory);
-  const { data: gutendexBooks = [], isLoading: loadingGutendex } = useGutendexQuery(currentCategory);
+  const { data: gutendexBooks = [], isLoading: loadingGutendex } = useGutendexQuery(currentCategory, searchQuery);
   const { data: records = {} } = useLibraryRecords();
 
   // Combine feeds
@@ -29,7 +29,9 @@ export const LibraryBrowser: React.FC = () => {
     combinedBooks = combinedBooks.filter((b) => records[b.id]?.isFavorite);
   }
 
-  const isLoading = loadingGoogle && loadingGutendex;
+  const isLoading = (activeSource === 'google' && loadingGoogle) ||
+                    (activeSource === 'gutendex' && loadingGutendex) ||
+                    (activeSource === 'all' && loadingGoogle && loadingGutendex);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-[#0B0F19] text-[#F8FAFC] overflow-y-auto custom-scrollbar">
