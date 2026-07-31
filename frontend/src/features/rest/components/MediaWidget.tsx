@@ -13,6 +13,28 @@ export const MediaWidget: React.FC = () => {
   const [activeTrack, setActiveTrack] = useState<DynamicMusicTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  React.useEffect(() => {
+    engine.setTimeUpdateCallback((curr, dur) => {
+      setCurrentTime(curr);
+      setDuration(dur);
+    });
+  }, []);
+
+  const formatTime = (secs: number) => {
+    if (isNaN(secs) || secs <= 0) return '00:00';
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60);
+    return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = parseFloat(e.target.value);
+    setCurrentTime(val);
+    engine.seekTo(val);
+  };
 
   const { data: onlineTracksData = [], isLoading } = useDynamicMusicQuery(searchTag || selectedGenre);
   const onlineTracks = Array.isArray(onlineTracksData) ? onlineTracksData : [];
@@ -111,11 +133,24 @@ export const MediaWidget: React.FC = () => {
 
         {/* Playback Progress Indicator Bar */}
         <div className="w-full mt-3 flex items-center gap-2 px-1">
-          <span className="text-[9px] font-mono font-bold text-[#190019]/60">00:00</span>
-          <div className="flex-1 h-2 bg-[#DFB6B2]/50 border border-[#190019] rounded-full overflow-hidden p-0.5">
-            <div className={`h-full bg-[#190019] rounded-full transition-all duration-300 ${isPlaying ? 'w-2/3' : 'w-0'}`} />
+          <span className="text-[9px] font-mono font-bold text-[#190019]/60 w-8 text-left">{formatTime(currentTime)}</span>
+          <div className="flex-1 h-2 bg-[#DFB6B2]/50 border border-[#190019] rounded-full overflow-hidden relative group">
+            <div 
+              className="h-full bg-[#190019] rounded-full transition-all duration-150" 
+              style={{ width: `${duration > 0 ? (currentTime / duration) * 100 : 0}%` }} 
+            />
+            <input 
+              type="range" 
+              min="0" 
+              max={duration || 100} 
+              step="0.1" 
+              value={currentTime} 
+              onChange={handleSeek}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+              title="Seek Position"
+            />
           </div>
-          <span className="text-[9px] font-mono font-bold text-[#190019]/60">03:40</span>
+          <span className="text-[9px] font-mono font-bold text-[#190019]/60 w-8 text-right">{formatTime(duration)}</span>
         </div>
 
         {/* Playback Controls */}

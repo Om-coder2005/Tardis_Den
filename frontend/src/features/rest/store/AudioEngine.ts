@@ -3,6 +3,7 @@ export class AudioEngine {
   private currentAudio: HTMLAudioElement | null = null;
   private currentUrl: string | null = null;
   private volume: number = 0.5;
+  private onTimeUpdateCallback: ((currentTime: number, duration: number) => void) | null = null;
 
   private constructor() {}
 
@@ -17,6 +18,16 @@ export class AudioEngine {
     this.volume = Math.max(0, Math.min(1, vol));
     if (this.currentAudio) {
       this.currentAudio.volume = this.volume;
+    }
+  }
+
+  public setTimeUpdateCallback(cb: (currentTime: number, duration: number) => void) {
+    this.onTimeUpdateCallback = cb;
+  }
+
+  public seekTo(seconds: number) {
+    if (this.currentAudio && !isNaN(seconds)) {
+      this.currentAudio.currentTime = seconds;
     }
   }
 
@@ -36,6 +47,7 @@ export class AudioEngine {
 
     if (this.currentAudio) {
       this.currentAudio.pause();
+      this.currentAudio.ontimeupdate = null;
       this.currentAudio.src = '';
       this.currentAudio = null;
       this.currentUrl = null;
@@ -46,6 +58,15 @@ export class AudioEngine {
     this.currentAudio.loop = true;
     this.currentAudio.volume = this.volume;
     
+    this.currentAudio.ontimeupdate = () => {
+      if (this.currentAudio && this.onTimeUpdateCallback) {
+        this.onTimeUpdateCallback(
+          this.currentAudio.currentTime || 0,
+          this.currentAudio.duration || 0
+        );
+      }
+    };
+
     try {
       await this.currentAudio.play();
       return true;
