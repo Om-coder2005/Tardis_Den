@@ -1,18 +1,30 @@
 import React, { useState } from 'react';
-import { useDreamStore } from '../store/useDreamStore';
+import { useDreamStore, AUDIO_TRACKS } from '../store/useDreamStore';
 import { useDynamicMusicQuery } from '../services/restAreaServices';
 import type { DynamicMusicTrack } from '../services/restAreaServices';
-import { Play, Pause, Disc3, Volume2, Music, Search } from 'lucide-react';
+import { Play, Pause, Disc3, Volume2, Music, Search, Radio, FileMusic } from 'lucide-react';
 import { engine } from '../store/AudioEngine';
 
 export const MediaWidget: React.FC = () => {
   const { audioVolume, setVolume } = useDreamStore();
+  const [activeTab, setActiveTab] = useState<'my_music' | 'online_stream'>('my_music');
   const [selectedGenre, setSelectedGenre] = useState('chillout');
   const [searchTag, setSearchTag] = useState('');
   const [activeTrack, setActiveTrack] = useState<DynamicMusicTrack | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const { data: musicTracks = [], isLoading } = useDynamicMusicQuery(searchTag || selectedGenre);
+  const { data: onlineTracksData = [], isLoading } = useDynamicMusicQuery(searchTag || selectedGenre);
+  const onlineTracks = Array.isArray(onlineTracksData) ? onlineTracksData : [];
+
+  // Convert local AUDIO_TRACKS to unified DynamicMusicTrack format
+  const localTracks: DynamicMusicTrack[] = AUDIO_TRACKS.map((t) => ({
+    id: t.id,
+    name: t.name,
+    artist: 'My Audio Collection',
+    audio: t.file,
+  }));
+
+  const activeTrackList = activeTab === 'my_music' ? localTracks : onlineTracks;
 
   const handlePlayTrack = async (track: DynamicMusicTrack) => {
     if (activeTrack?.id === track.id && isPlaying) {
@@ -50,10 +62,10 @@ export const MediaWidget: React.FC = () => {
         </div>
 
         <h4 className="text-sm font-bold text-[#F8FAFC] truncate max-w-[200px] text-center">
-          {activeTrack ? activeTrack.name : 'Select Stream Track'}
+          {activeTrack ? activeTrack.name : 'Select Track to Play'}
         </h4>
         <p className="text-[10px] text-[#94A3B8] uppercase tracking-widest mt-1">
-          {activeTrack ? activeTrack.artist : 'Royalty-Free Music Stream'}
+          {activeTrack ? activeTrack.artist : 'Resting Quarters Audio'}
         </p>
 
         {/* Play Pause Trigger */}
@@ -68,40 +80,66 @@ export const MediaWidget: React.FC = () => {
         )}
       </div>
 
-      {/* Genre Filter & Search Bar */}
-      <div className="p-4 border-y border-[#1E293B] bg-[#0F172A]/50 space-y-3">
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 text-[#94A3B8] w-3.5 h-3.5" />
-          <input
-            type="text"
-            placeholder="Search genre or vibe (e.g. ambient, jazz)..."
-            value={searchTag}
-            onChange={(e) => setSearchTag(e.target.value)}
-            className="w-full bg-[#1E293B] border border-[#334155] rounded-lg py-1.5 pl-8 pr-3 text-xs text-[#F8FAFC] outline-none focus:border-[#4CC9F0]"
-          />
-        </div>
-
-        <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar text-[10px]">
-          {['chillout', 'ambient', 'lofi', 'classical', 'piano', 'space'].map((genre) => (
-            <button
-              key={genre}
-              onClick={() => { setSearchTag(''); setSelectedGenre(genre); }}
-              className={`px-2.5 py-1 rounded-md uppercase font-bold transition-all shrink-0 ${
-                selectedGenre === genre && !searchTag ? 'bg-[#4CC9F0] text-[#0F172A]' : 'bg-[#1E293B] text-[#94A3B8] hover:text-white'
-              }`}
-            >
-              {genre}
-            </button>
-          ))}
-        </div>
+      {/* Playlist Source Selector Tabs */}
+      <div className="flex border-y border-[#1E293B] bg-[#0B0F19] p-1 text-xs">
+        <button
+          onClick={() => setActiveTab('my_music')}
+          className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+            activeTab === 'my_music' ? 'bg-[#C5A059] text-[#0F172A]' : 'text-[#94A3B8] hover:text-white'
+          }`}
+        >
+          <FileMusic className="w-3.5 h-3.5" />
+          My Audio Files ({localTracks.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('online_stream')}
+          className={`flex-1 py-2 rounded-lg font-bold flex items-center justify-center gap-2 transition-all ${
+            activeTab === 'online_stream' ? 'bg-[#4CC9F0] text-[#0F172A]' : 'text-[#94A3B8] hover:text-white'
+          }`}
+        >
+          <Radio className="w-3.5 h-3.5" />
+          Free Online Radio
+        </button>
       </div>
 
-      {/* Dynamic API Music Track List */}
+      {/* Genre Filter & Search Bar (Only for Online Radio) */}
+      {activeTab === 'online_stream' && (
+        <div className="p-3 border-b border-[#1E293B] bg-[#0F172A]/50 space-y-2.5">
+          <div className="relative">
+            <Search className="absolute left-3 top-2 text-[#94A3B8] w-3.5 h-3.5" />
+            <input
+              type="text"
+              placeholder="Search genre (ambient, lofi, space)..."
+              value={searchTag}
+              onChange={(e) => setSearchTag(e.target.value)}
+              className="w-full bg-[#1E293B] border border-[#334155] rounded-lg py-1.5 pl-8 pr-3 text-xs text-[#F8FAFC] outline-none focus:border-[#4CC9F0]"
+            />
+          </div>
+
+          <div className="flex gap-1.5 overflow-x-auto pb-1 custom-scrollbar text-[10px]">
+            {['chillout', 'ambient', 'lofi', 'classical', 'piano', 'space'].map((genre) => (
+              <button
+                key={genre}
+                onClick={() => { setSearchTag(''); setSelectedGenre(genre); }}
+                className={`px-2 py-0.5 rounded uppercase font-bold transition-all shrink-0 ${
+                  selectedGenre === genre && !searchTag ? 'bg-[#4CC9F0] text-[#0F172A]' : 'bg-[#1E293B] text-[#94A3B8] hover:text-white'
+                }`}
+              >
+                {genre}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Music Track List */}
       <div className="max-h-48 overflow-y-auto p-3 space-y-1.5 custom-scrollbar">
-        {isLoading ? (
-          <div className="text-center py-6 text-xs text-[#94A3B8]">STREAMING MUSIC CATALOG...</div>
+        {activeTab === 'online_stream' && isLoading ? (
+          <div className="text-center py-6 text-xs text-[#94A3B8]">STREAMING ONLINE RADIO...</div>
+        ) : activeTrackList.length === 0 ? (
+          <div className="text-center py-6 text-xs text-[#94A3B8]">NO AUDIO TRACKS FOUND</div>
         ) : (
-          musicTracks.map((track) => {
+          activeTrackList.map((track) => {
             const isThisPlaying = activeTrack?.id === track.id && isPlaying;
             return (
               <div
