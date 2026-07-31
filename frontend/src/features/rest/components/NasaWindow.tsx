@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useDreamStore } from '../store/useDreamStore';
+import { getOptimizedImageUrl } from '../../../utils/imageOptimizer';
 import { Maximize2, Minus, X, Loader2, RefreshCcw } from 'lucide-react';
 
 export const NasaWindow: React.FC = () => {
@@ -62,7 +63,7 @@ export const NasaWindow: React.FC = () => {
 
             {dailyQuote.url && (
               <div className="w-full border-2 border-[#190019] bg-[#190019] shadow-[4px_4px_0px_#190019]">
-                <img src={dailyQuote.url} alt={dailyQuote.title} className="max-h-64 w-full object-cover" />
+                <img src={getOptimizedImageUrl(dailyQuote.url, { width: 600 })} alt={dailyQuote.title} className="max-h-64 w-full object-cover" />
               </div>
             )}
             

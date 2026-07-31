@@ -4,9 +4,11 @@ import { useRoomStore } from '../../../store';
 import { useCreateJournalEntry } from '../../journal/services/journal.service';
 import { useJournalStore } from '../../journal/store/useJournalStore';
 import { CAMPFIRE_CARDS, useDreamStore } from '../store/useDreamStore';
+import { useMindfulnessQuoteQuery } from '../services/restAreaServices';
 
 export const CampfireWindow: React.FC = () => {
   const { activeWindows, closeWindow } = useDreamStore();
+  const { data: quoteData } = useMindfulnessQuoteQuery();
   const { setFocusedObjectId } = useRoomStore();
   const { setSelectedEntryId } = useJournalStore();
   const { mutate: createJournalEntry, isPending: isCreating } = useCreateJournalEntry();
@@ -163,6 +165,13 @@ export const CampfireWindow: React.FC = () => {
                 <p className="font-['Playfair_Display',serif] text-xl md:text-2xl font-semibold leading-relaxed text-[#190019]">
                   "{currentCard.question}"
                 </p>
+
+                {quoteData && (
+                  <div className="mt-4 p-3 bg-[#DFB6B2]/30 border border-[#854F6C]/40 rounded text-xs italic text-[#2B124C]">
+                    <span className="font-bold uppercase not-italic text-[9px] block text-[#854F6C] font-mono mb-1">Daily Mindfulness Quote</span>
+                    "{quoteData.quote}" — <span className="font-bold not-italic">{quoteData.author}</span>
+                  </div>
+                )}
               </div>
 
               <div className="pt-4 mt-4 border-t border-[#DFB6B2]/60 flex items-center justify-between text-xs text-[#190019]/70 italic">

@@ -175,5 +175,62 @@ export const ExternalController = {
       console.error('Error fetching Gutenberg full text:', error);
       res.status(500).json({ error: 'Failed to load eBook text' });
     }
+  },
+
+  // 8. Free Music Streaming API Proxy (Jamendo Royalty-Free API)
+  async searchMusic(req: Request, res: Response) {
+    try {
+      const tag = (req.query.q as string) || (req.query.tag as string) || 'chillout';
+      // Jamendo Client ID (Public Free API Client ID)
+      const clientId = process.env.JAMENDO_CLIENT_ID || '568f1c44';
+      
+      const response = await fetch(
+        `https://api.jamendo.com/v3.0/tracks/?client_id=${clientId}&format=json&limit=20&tags=${encodeURIComponent(tag)}&audioformat=mp32`
+      );
+      const data = await response.json();
+      
+      if (!response.ok || !data?.results) {
+        return res.status(500).json({ error: 'Failed to stream music catalog' });
+      }
+
+      const tracks = data.results.map((track: any) => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artist_name,
+        audio: track.audio,
+        image: track.image,
+        duration: track.duration,
+      }));
+
+      res.json(tracks);
+    } catch (error) {
+      console.error('Error fetching free music catalog:', error);
+      res.status(500).json({ error: 'Music API unavailable' });
+    }
+  },
+
+  // 9. Daily Mindfulness Quotes API Proxy (ZenQuotes)
+  async getDailyQuote(req: Request, res: Response) {
+    try {
+      const response = await fetch('https://zenquotes.io/api/today');
+      const data = await response.json();
+      
+      if (Array.isArray(data) && data[0]) {
+        return res.json({
+          quote: data[0].q,
+          author: data[0].a,
+        });
+      }
+      
+      res.json({
+        quote: "Look up at the stars and not down at your feet. Try to make sense of what you see.",
+        author: "Stephen Hawking"
+      });
+    } catch (error) {
+      res.json({
+        quote: "Look up at the stars and not down at your feet. Try to make sense of what you see.",
+        author: "Stephen Hawking"
+      });
+    }
   }
 };

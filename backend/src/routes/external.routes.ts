@@ -15,5 +15,7 @@ router.get('/iss', ExternalController.getIssLocation);
 router.get('/google-books', ExternalController.searchGoogleBooks);
 router.get('/gutendex', ExternalController.getGutendexBooks);
 router.get('/gutendex/:id/text', ExternalController.getGutendexTextContent);
+router.get('/music', ExternalController.searchMusic);
+router.get('/quote', ExternalController.getDailyQuote);
 
 export default router;

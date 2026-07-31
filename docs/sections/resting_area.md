@@ -25,16 +25,17 @@ The **Resting Area** (Zone F: Comfort Area) serves as a sanctuary within TARDIS 
 ## 3. Current Implementation Status
 
 ### ✅ Working Features
-1. **Ambient Audio Playback**: Selecting ambient audio streams, volume adjustment, and playback toggle.
-2. **Pomodoro Timer**: Functional timer start, pause, reset, and duration configuration.
-3. **NASA APOD Window**: Fetching and displaying NASA daily astronomy imagery with fallback content handling.
-4. **ISS Occupants Tracker**: Rendering current astronauts in space with telemetry details inside `AstrosWindow`.
-5. **Widget Grid Layout**: Toggle and layout management for rest area tools.
+1. **Dynamic Royalty-Free Music Stream Engine ([MediaWidget.tsx](file:///d:/the_space/frontend/src/features/rest/components/MediaWidget.tsx))**: Replaced hardcoded ambient tracks with dynamic music streaming API (`/api/external/music`). Users can search vibes/genres (chillout, ambient, lofi, classical, piano, space) live.
+2. **ZenQuotes Daily Mindfulness API**: Fetches live daily mindfulness quotes (`/api/external/quote`) inside the evening reflection prompt cards.
+3. **Pomodoro Focus Timer**: Functional countdown timer supporting work/rest cycles and countdown progress indicators.
+4. **Cloudinary NASA APOD Window**: Optimized daily astronomy picture fetching with WebP conversion.
+5. **ISS Astronaut Tracker Window**: Renders live human space station occupants and telemetry details.
 
-### ❌ Non-Working / Planned Features
-1. **Interactive 3D Furniture**: Interactive animations for sitting on the bed or folding/unfolding the crochet blanket in 3D canvas mode.
-2. **Custom Audio Upload**: Uploading custom MP3/audio files to the soundscape player (currently limited to pre-configured audio tracks).
+---
 
-### ⚠️ Redundant / Mocked Components
-1. **Campfire Animation Stream**: `CampfireWindow` uses pre-rendered canvas fallback animations when external video streams fail to load.
-2. **Dynamic Room Lighting Sync**: Audio frequency reactive lighting (changing room ambient lights based on playing soundscapes) is currently stubbed out.
+## 4. Connected APIs & Efficiency
+
+- **Jamendo Free Music API**: Streaming royalty-free music tracks (`api.jamendo.com/v3.0/tracks`).
+- **ZenQuotes API**: Daily mindfulness quotes (`zenquotes.io/api/today`).
+- **NASA APOD & Open-Notify ISS APIs**: Daily astronomy image & astronaut tracking.
+- **Cloudinary Image Optimizer**: Auto WebP image compression for NASA daily imagery.
