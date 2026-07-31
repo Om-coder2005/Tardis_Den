@@ -54,7 +54,7 @@ export const PasscodeInput: React.FC<PasscodeInputProps> = ({ onComplete, disabl
   };
 
   return (
-    <div className="flex gap-2 justify-center">
+    <div className="flex gap-3 justify-center">
       {code.map((char, index) => (
         <input
           key={index}
@@ -66,7 +66,7 @@ export const PasscodeInput: React.FC<PasscodeInputProps> = ({ onComplete, disabl
           onChange={(e) => handleChange(e, index)}
           onKeyDown={(e) => handleKeyDown(e, index)}
           onPaste={handlePaste}
-          className="w-12 h-14 text-center text-2xl bg-slate-800 border border-slate-700 rounded-md focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-colors disabled:opacity-50 text-slate-100"
+          className="w-11 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold font-mono bg-[#0d0f18]/80 border-2 border-[#f3d26a]/30 rounded-xl focus:border-[#f3d26a] focus:ring-2 focus:ring-[#f3d26a]/40 focus:shadow-[0_0_20px_rgba(243,210,106,0.3)] outline-none transition-all duration-200 disabled:opacity-40 text-[#f6e8b2] shadow-inner"
           autoFocus={index === 0}
         />
       ))}
