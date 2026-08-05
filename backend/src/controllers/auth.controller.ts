@@ -19,7 +19,7 @@ export const AuthController = {
   async login(req: Request, res: Response) {
     const { passcode } = req.body;
 
-    if (!passcode || typeof passcode !== 'string' || passcode.length !== 6) {
+    if (!passcode || typeof passcode !== 'string' || passcode.trim().length === 0) {
       return res.status(400).json({ error: 'Invalid passcode format' });
     }
 

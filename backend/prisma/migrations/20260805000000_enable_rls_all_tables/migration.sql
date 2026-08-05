@@ -1,0 +1,10 @@
+-- Enable Row Level Security (RLS) on all public tables to prevent unauthorized exposure via Supabase PostgREST API
+
+ALTER TABLE IF EXISTS "public"."Administrator" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."Session" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."LibraryRecord" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."JournalFolder" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."JournalEntry" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."JournalVersion" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."PhotoAlbum" ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS "public"."Photo" ENABLE ROW LEVEL SECURITY;

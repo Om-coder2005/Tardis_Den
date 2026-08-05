@@ -13,8 +13,14 @@ export const requireAuth = async (req: Request, res: Response, next: NextFunctio
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const jwtSecret = process.env.JWT_SECRET || 'tardis-den-default-jwt-secret-key';
-    const decoded = jwt.verify(token, jwtSecret) as { sessionId: string };
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      if (process.env.NODE_ENV === 'production') {
+        throw new Error('JWT_SECRET environment variable is missing');
+      }
+    }
+    const secretToUse = jwtSecret || 'tardis-den-default-jwt-secret-key';
+    const decoded = jwt.verify(token, secretToUse) as { sessionId: string };
     const session = await prisma.session.findUnique({ where: { id: decoded.sessionId } });
 
     if (!session || session.expiresAt < new Date()) {

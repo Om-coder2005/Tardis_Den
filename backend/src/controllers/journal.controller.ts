@@ -188,7 +188,9 @@ export const JournalController = {
       }
 
       if (!url) {
-        const ext = path.extname(req.file.originalname) || '.png';
+        const rawExt = path.extname(req.file.originalname).toLowerCase();
+        const allowedExts = ['.png', '.jpg', '.jpeg', '.webp', '.gif'];
+        const ext = allowedExts.includes(rawExt) ? rawExt : '.png';
         const filename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${ext}`;
         const filepath = path.join(process.cwd(), 'uploads', filename);
         fs.writeFileSync(filepath, req.file.buffer);
