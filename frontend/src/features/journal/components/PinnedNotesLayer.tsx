@@ -113,7 +113,10 @@ export const PinnedNotesLayer: React.FC = () => {
               <motion.div
                 key={note.id}
                 drag
-                dragMomentum={false}
+                dragMomentum={true}
+                dragElastic={0.05}
+                dragTransition={{ power: 0.2, timeConstant: 200 }}
+                whileDrag={{ scale: 1.05, rotate: 0, zIndex: 120 }}
                 onDragEnd={(_event, info) => handleDragEnd(note.id, info)}
                 onContextMenu={(e) => handleContextMenu(e, note.id)}
                 onDoubleClick={() => {
@@ -122,9 +125,12 @@ export const PinnedNotesLayer: React.FC = () => {
                 initial={{ x: note.x || 120, y: note.y || 120, opacity: 0, scale: 0.8, rotate: rotationDeg }}
                 animate={{ x: note.x || 120, y: note.y || 120, opacity: 1, scale: 1, rotate: rotationDeg }}
                 exit={{ opacity: 0, scale: 0.8, rotate: 0 }}
-                whileHover={{ rotate: 0, scale: 1.03, zIndex: 110 }}
-                className="absolute pointer-events-auto w-64 rounded-2xl cursor-move shadow-[0_15px_35px_rgba(0,0,0,0.25)] hover:shadow-[0_20px_45px_rgba(0,0,0,0.35)] transition-all duration-300 border border-black/10 group overflow-visible"
-                style={{ backgroundColor: note.color || STICKY_PALETTES[0].color }}
+                whileHover={{ rotate: 0, scale: 1.02, zIndex: 110 }}
+                className="absolute pointer-events-auto w-64 rounded-2xl cursor-grab active:cursor-grabbing shadow-[0_15px_35px_rgba(0,0,0,0.25)] hover:shadow-[0_25px_50px_rgba(0,0,0,0.35)] border border-black/10 group overflow-visible select-noneWillChange"
+                style={{ 
+                  backgroundColor: note.color || STICKY_PALETTES[0].color,
+                  willChange: 'transform'
+                }}
               >
                 {/* Visual Decorative Push-Pin Icon at Top Center */}
                 <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 z-20 drop-shadow-md">
