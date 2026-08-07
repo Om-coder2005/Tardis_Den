@@ -1,26 +1,46 @@
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcrypt';
 import { prisma } from '../prisma';
 
 export const AuthService = {
   async login(passcode: string): Promise<string | null> {
-    const expectedPasscode = process.env.ADMIN_PASSKEY || '123456';
-
-    // Convert strings to Buffer for constant-time comparison
-    const a = Buffer.from(passcode);
-    const b = Buffer.from(expectedPasscode);
+    const passkeyHash = process.env.ADMIN_PASSKEY_HASH;
+    const rawPasskey = process.env.ADMIN_PASSKEY || '123456';
 
     let match = false;
-    if (a.length === b.length) {
-      match = crypto.timingSafeEqual(a, b);
+
+    if (passkeyHash && (passkeyHash.startsWith('$2a$') || passkeyHash.startsWith('$2b$'))) {
+      // Secure Bcrypt verification
+      try {
+        match = await bcrypt.compare(passcode, passkeyHash);
+      } catch (err) {
+        console.error('Bcrypt comparison error:', err);
+        match = false;
+      }
+    } else if (rawPasskey.startsWith('$2a$') || rawPasskey.startsWith('$2b$')) {
+      // Allow bcrypt hash directly in ADMIN_PASSKEY
+      try {
+        match = await bcrypt.compare(passcode, rawPasskey);
+      } catch (err) {
+        console.error('Bcrypt comparison error:', err);
+        match = false;
+      }
     } else {
-      // Dummy operation to prevent length timing side channels
-      crypto.timingSafeEqual(b, b);
+      // Fallback constant-time timing-safe comparison for raw text
+      const a = Buffer.from(passcode);
+      const b = Buffer.from(rawPasskey);
+
+      if (a.length === b.length) {
+        match = crypto.timingSafeEqual(a, b);
+      } else {
+        crypto.timingSafeEqual(b, b);
+      }
     }
 
     if (!match) {
       // Add deliberate artificial delay on failure to thwart automated brute-force attempts
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       return null;
     }
 
@@ -56,4 +76,3 @@ export const AuthService = {
     }
   }
 };
-
